@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+	default-autowire="byName" default-autowire-candidates="*Writer">
+
+
+	<bean id="logger" class="logger.Logger" autowire="byName"></bean>
+	<bean id="consoleWriter" class="logger.ConsoleWriter"></bean>
+	<bean id="fileWriter" class="logger.FileWriter"></bean>
+	<bean id="squirrel" class="logger.FileWriter"
+		autowire-candidate="false">
+	</bean>
+</beans>

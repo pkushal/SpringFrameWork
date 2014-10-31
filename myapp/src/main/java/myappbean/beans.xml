@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+	<bean class="myapp.Person" scope="singleton" init-method="init"
+		destroy-method="destroy" id="kushalbean">
+
+		<constructor-arg name="id" value="100" type="int"></constructor-arg>
+		<constructor-arg name="name" value="kushalfrombean"
+			type="String"></constructor-arg>
+		
+	</bean>
+
+	<bean class="myapp.Person" scope="singleton" init-method="init"
+		destroy-method="destroy" id="kushalbeangetInstance" factory-method="getInstance">
+
+		<constructor-arg name="id" value="200" type="int"></constructor-arg>
+		<constructor-arg name="name" value="kushalfromgetInstance"
+			type="String"></constructor-arg>
+	</bean>
+
+	<bean class="myapp.Person" scope="singleton" init-method="init"
+		destroy-method="destroy" id="kushalfrompersonFactory" factory-method="personFactory"
+		factory-bean="personFactoryBean">
+
+		<constructor-arg name="id" value="300" type="int"></constructor-arg>
+		<constructor-arg name="name" value="kushalfrompersonFactory"
+			type="String"></constructor-arg>
+	</bean>
+	<bean id="personFactoryBean" class="myapp.PersonFactory"></bean>
+
+
+	<bean class="myapp.Person" scope="singleton" init-method="init"
+		destroy-method="destroy" id="kushalbeanwithFruit">
+
+		<constructor-arg type="int" value="400"></constructor-arg>
+		<constructor-arg value="kushalbeanwithFruit" type="String"></constructor-arg>
+		<constructor-arg>
+			<list>
+				<value>apples</value>
+				<value>oranges</value>
+				<value>mango</value>
+				<value>banana</value>
+
+			</list>
+		</constructor-arg>
+	</bean>
+
+
+</beans>
+
+

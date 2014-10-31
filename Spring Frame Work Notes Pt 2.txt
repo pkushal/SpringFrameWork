@@ -1,0 +1,248 @@
+Spring frameWork:
+------------------------
+
+
+Working with database:
+
+Creating a database with MySQL:
+
+Just create a database in the MySQL database for spring. Create a table using the add diagram button and 
+do the forward engineer in the database tab. It will create a database.
+
+
+
+Using property files in the Spring:
+Create a separate package and right click and add file, name it to sth like jdbc.properties.
+It should end in .properties by tradition.
+Then in the beans.xml under the context add a bean using the context-property-placeholder and set the location to the
+location of the jdbc.properties
+Now create a bean in the beans tab and set the properties of the beans to be the values from the values inside the jdbc.properties
+file
+To access the values from the jdbc.properties we need to use the ${} as ${user} or ${password} in the values filed in the beans
+
+Implementing a DAO Pattern:
+-----------------------------
+
+Make a class (Offers) with the instance variables same as the items in the column of the database.
+Then make a class called somethingDAO to get the objects of the database class (say, OffersDAO)
+
+Now, need to have a connector jar file. It is a kinda driver to connect to the database. Search for
+mysql-connector in the dependencies using maven. add the one with java. Right click the main project and go to maven
+ and update project.
+
+Finally go to the jdbc.properties file and add jdbc.driver = com.mysql.jdbc.Driver to the file.
+Here Driver is the class file that is inside the mysql connector package in the maven dependencies package.
+
+Configuring the connection Pooling with APACHE DBCP:
+-----------------------------------------------------
+
+We are configuring the apache commons database pool. DBCP is database connection pool
+Google basicdatasource or directly search for dbcp in maven using the dependencies and add commons-dbcp. Upadate project
+Then create a bean called dataSource and use the Class as org.apache.commons.dbcp.BasicDataSource. This Class is in the maven dependendies jar
+that we installed. For this bean define a method called close in the destroy to close the connection afterwards.
+
+We also need to have something like jdbc.url in the jdbc.properties file. so Google for jdbc connection url and search for like
+
+jdbc:mysql://localhost:3306/yourdatabasefilename?profileSQL=true
+
+
+jdbc.user = root
+jdbc.password = dornier228
+jdbc.driver = com.mysql.jdbc.Driver
+jdbc.url = jdbc:mysql://localhost:3306/springframework
+
+
+Now in the datasource bean we just created, right click on it and choose insert property and name it driverClassName. This driverClassName is 
+from basicdataSource and set the value as ${jdbc.driver}. By this we are linking the jdbc.properties file's driver link to the dataSource bean using the
+insert property method.
+Similary, for the url,${jdbc.url};  password and username
+
+JDBC template allows you to query database in an elegant way
+---------------------------------------------------------------
+
+To use the jdbcTemplate class need to add one more jar file, from the maven search for spring-jdbc. update the project and now you should be
+able to use the class called JdbcTemplate in the OffersDAO class.
+Finally create a setter method and modify as
+
+public void setDataSource(DataSource jdbc) {
+		this.jdbc = new JdbcTemplate(jdbc);
+	}
+
+
+Finally connected :)
+
+
+Handling Exceptions with spring while connecting to the database: Database Exceptions:
+--------------------------------------------------------------------------------------
+SQL related exceptions in Spring.
+Spring wraps the exception to the data access expection and it a run time exception.
+
+In the main class we can do like:
+
+public class Main {
+	public static void main(String[] args) {
+		ApplicationContext context = new ClassPathXmlApplicationContext(
+				"beans/beans.xml");
+		OffersDAO offersDao = (OffersDAO) context.getBean("offersDao");
+		
+//Use try Catch Block to handle the exception and here DataAccessException is like a general kind of exception that handles the query related exceptions
+
+		try {
+			List<Offers> offers = offersDao.getOffers();
+			for (Offers off : offers) {
+				System.out.println(off);
+			}
+		} catch (DataAccessException e) {
+			System.out.println(e.getMessage());
+			System.out.println(e.getClass());
+		}
+		((ClassPathXmlApplicationContext) context).close();
+	}
+
+
+
+
+Named Parameters:
+------------------
+To parametrize the query, we use the ? sign. we should not make like getting the user input to be placed in the query due to the risk of 
+SQL injection. For using the namedParameter we should replace the JdbcTemplate to NamedParameterJdbcTemplate in the DAO class.
+
+@Component("offersDao")
+public class OffersDAO {
+
+	private NamedParameterJdbcTemplate jdbc;
+
+	// this is the modified setter method for the above JdbcTemplate
+	@Autowired
+	public void setDataSource(DataSource jdbc) {
+		this.jdbc = new NamedParameterJdbcTemplate(jdbc);
+	}
+
+	public List<Offers> getOffers() {
+
+		MapSqlParameterSource params = new MapSqlParameterSource("name",
+				"Kushal");
+		// we can also do like
+
+		/*
+		 * MapSqlParameterSource params = new MapSqlParameterSource();
+		 * params.addValue("name", "Kushal");
+		 * And we can have more than one params with different variables names and placeholder
+		 */
+
+		// return jdbc.query(sql, rowMapper);
+		return jdbc.query("select * from offers where name = :name", params,
+				new RowMapper<Offers>() {
+
+					public Offers mapRow(ResultSet rs, int rowNum)
+							throws SQLException {
+						Offers offer = new Offers();
+						offer.setId(rs.getInt("id")); // id is the column name
+														// from the
+														// database and so is
+														// name,
+														// email and text
+						offer.setName(rs.getString("name"));
+						offer.setEmail(rs.getString("email"));
+						offer.setText(rs.getString("text"));
+						return offer;
+					}
+
+				});
+	}
+
+}
+
+
+Update statements for SQL statements in spring:
+------------------------------------------------
+	public boolean delete(int id) {
+
+		MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+		/*	
+		 * If you have used the NamedParameterJdbcTemplate and want to use the methods from 
+		 * the plain JdbcTemplate then do like:
+		 * 		 * 	jdbc.getJdbcOperations().whatevermethodyouwanttouse();
+		 * 
+		 * */
+		return jdbc.update("delete from offers where id=:id", params) == 1;
+	}
+
+}
+
+
+Getting placeholder values from beans:
+---------------------------------------
+	public boolean create(Offers offer) {
+		//this class is gonna look for properties in the bean which is gonna match the placeholder
+		BeanPropertySqlParameterSource params = new BeanPropertySqlParameterSource(
+				offer);
+		return jdbc.update("insert into offers (name, text,email) values(:name,:text,:email)",params) == 1;
+
+	}
+
+And in the main method we can do like:
+			Offers offer1 = new Offers("Jonathan", "jon@cave.com",
+					"coding java is fun");
+			Offers offer2 = new Offers("Jon", "jon@cgmail.com",
+					"coding SPRING is fun");
+			if (offersDao.create(offer1))
+				System.out.println("Object created");
+			if (offersDao.create(offer2))
+				System.out.println("Object created");
+
+
+
+Adding an update method to the DAO:
+------------------------------------
+	public boolean update(Offers offer) {
+		BeanPropertySqlParameterSource params = new BeanPropertySqlParameterSource(
+				offer);
+		
+		return jdbc
+				.update("update offers set name=:name, email=:email, text=:text where id=:id",params) == 1;
+	}
+
+
+And in the main method, we can do like:
+
+	Offers offer = new Offers(5,"kushalupdate","update@update.com", "this is a update");
+	offersDao.update(offer);
+
+
+
+Batch Updates: Prepared statement:
+----------------------------------
+
+What if i need to do something in batch like add 100 users...there comes the prepared statements.
+
+
+public int[] create(List<Offers> offer) {
+//SqlParameterSourceUtils will create a batch of the Offers and the convert to array.
+		SqlParameterSource[] params = SqlParameterSourceUtils.createBatch(offer.toArray());
+		return jdbc.batchUpdate("insert into offers (name, text,email) values(:name,:text,:email)", params);
+	}
+
+And in the main method, we can do like:
+
+	List<Offers>  offerarray= new ArrayList<Offers>();
+			offerarray.add (new Offers("user1","user1@gmail.com","this is some text"));
+			offerarray.add(new Offers("user2","user2@gmail.com","this is some text again"));
+
+
+if you want to do the regular batchupdate using the plain jdbc template then use the jdbc.getJdbcOperations().batchUpdate();
+
+
+Transactions:
+---------------
+If we have a group of SQL statements and we want all to pass or all to fail. That is like doing bank transaction thing where we
+want a complete transaction or no transactions.
+
+
+Create a new bean called transaction and class DataSourceTransactionManager. And a property called dataSource and ref it to the
+dataSource bean created before.
+Then go to namespace tab in the beans.xml and check the tx checkbox. Now tx tab will appear and then right click the bean and
+choose transaction-annotation driven.
+
+Finally in the method where you want to have transaction done, annotate as @Transactional
+It will make sure either every statment goes through or none. But it also has further options like isolation level, propagation etc

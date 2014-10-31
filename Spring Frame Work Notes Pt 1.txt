@@ -1,0 +1,446 @@
+/*
+	touch README.md
+	git init
+	git add README.md
+	git commit -m "first commit"
+	git remote add origin https://github.com/pkushal/SpringFrameWork.git
+	git push -u origin master
+*/
+
+
+Popular framework to develop the webapplications in java. It helps organizing java files either using XML files or java annotations.
+
+***Need to watch Servlets and JSP for web applications.***
+
+What we need:
+JDK EE for for web applications or SE plus something else. EE is for webapplications.
+We need WTP plugin for standard eclipse to turn it into Eclipse for Java EE developers. WTP is web tools platform for eclipse.
+
+http://www.eclipse.org/downloads/compare.php
+http://wiki.eclipse.org/WTP_FAQ#How_do_I_install_WTP.3F
+
+To install a plugin  in eclipse, go to Help, Eclipse market place
+To know if you have SDK or EE version of eclipse installed, go to help, install new software and look for already installed
+
+
+Plugins we need:
+
+1. Maven Integration for eclipse.
+Spring uses jar files from all over the place and maven helps to pull in the required jar files.
+
+http://maven.apache.org/eclipse-plugin.html
+You can install maven from the eclipse market place or install from the command line
+
+2. spring IDE
+
+For web development:
+1.Install tomcat- apache tomcat
+
+
+
+
+Apache Maven:
+Need to select a type of filter like quickstart
+Maven archetypes are like templates for projects which also includes the dependencies.
+We basically use maven from eclipse; it can also be done from the command line
+
+
+While creating a maven project, group id is like package name. Artifact id is like the name of the program name.
+If I don't choose the artifact filter then there will be no java codes by default.It just gives the directory structure.
+
+Now create a simple class file like in core java.. the to use the spring we need to inject some dependencies. Go to pom.xml and
+select the dependency tab and filter for the springframework...then select the jar like org.springframework spring-core, spring-beans, spring-context
+
+Now with spring what we are gonna do is, using the XML file we are gonna instantiate the Person object and get the person object in the App.java
+i.e., person bean from the spring container and call the speak method on it.
+Right click on the folder and then >new> Others> spring> spring bean configuration file and call it beans.
+
+It will create beans.xml file just right where the pom.xml is located.
+
+ApplicationContext is a class that can instantiate the beans and later fetch that beans on the container; beans just being the normal java objects
+BeanFactory is kinda same thing as the applicationcontext but is in lower level.
+
+
+Dependency Injection:
+   	It avoids the doing of new in every place. new is supplied from outside.
+
+A bean by default is singleton.
+
+Person person = (Person) context.getBean("person");
+		Person person1 = (Person) context.getBean("person");
+		person.speak();
+
+		person.setTaxId(777);
+		System.out.println(person1);
+
+here both person and person1 will have the taxId of 777 even though we only changed the taxId of person. This is the default
+behaviour due to singleton objects. Person and person1 are like different handles to the same object.
+To address this we need to change the scope of the bean to prototype.. Sngleton is by default.
+Prototype will create new object rather than refering the same object using different handles.
+
+
+Beans in Spring has lifetime and we can define the init and destroy method to define the lifecycle.
+If we set the scope of the bean to be prototype then the destroy method will not be automatically called. However for the default, singleton 
+scope the destroy method will be automatically called.
+
+Even though I do not instantiate the beans, and just by doing the ApplicationContext context = new ClassPathXmlApplicationContext(
+"myappbean/beans.xml");... the init and the destroy methods will run automatically if you put that info in the beans
+
+Factory bean and  factory method:
+
+
+p Namespace is a alternative way to define the property...don't use both p syntax and property tag
+
+
+InnerBeans:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+	<bean class="jungle.Jungle" id="jungle">
+		<property name="largest">
+			<bean id="elephant" name="elephant" class="jungle.Animals">
+				<property name="name" value="elephant"></property>
+				<property name="type" value="hatti"></property>
+			</bean>
+
+		</property>
+		
+		<property name="animals">
+			<list>
+	<bean id="elephant" name="elephant" class="jungle.Animals">
+		<property name="name" value="elephant"></property>
+		<property name="type" value="hatti"></property>
+	</bean>
+
+	<bean id="lion" name="lion" class="jungle.Animals">
+		<property name="name" value="lion"></property>
+		<property name="type" value="bagh"></property>
+	</bean>
+
+	<bean id="snake" name="snake" class="jungle.Animals">
+		<property name="name" value="snake"></property>
+		<property name="type" value="sarpo"></property>
+	</bean>			</list>
+		</property>
+	</bean>
+</beans>
+
+___________________________________________________________________________________________
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+	<bean class="jungle.Jungle" id="jungle">
+		<property name="largest" ref="elephant"></property>
+		<property name="animals">
+			<list>
+				<ref bean="lion" />
+				<ref bean="snake" />
+				<ref bean="elephant" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="elephant" name="elephant" class="jungle.Animals">
+		<property name="name" value="elephant"></property>
+		<property name="type" value="hatti"></property>
+	</bean>
+
+	<bean id="lion" name="lion" class="jungle.Animals">
+		<property name="name" value="lion"></property>
+		<property name="type" value="bagh"></property>
+	</bean>
+
+	<bean id="snake" name="snake" class="jungle.Animals">
+		<property name="name" value="snake"></property>
+		<property name="type" value="sarpo"></property>
+	</bean>
+	
+</beans>
+
+
+_______________________________________________________________________________
+
+Property Maps
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="elephant" name="elephant" class="jungle.Animals">
+		<property name="name" value="elephant"></property>
+		<property name="type" value="hatti"></property>
+	</bean>
+
+	<bean id="lion" name="lion" class="jungle.Animals">
+		<property name="name" value="lion"></property>
+		<property name="type" value="bagh"></property>
+	</bean>
+
+	<bean id="snake" name="snake" class="jungle.Animals">
+		<property name="name" value="snake"></property>
+		<property name="type" value="sarpo"></property>
+	</bean>
+
+	<bean id="jungle" class="jungle.Jungle">
+		<property name="foods">
+			<props>
+				<prop key="gorilla">banana</prop>
+				<prop key="bird">insects</prop>
+				<prop key="giraffe">leaves</prop>
+			</props>
+		</property>
+	</bean>
+</beans>
+
+
+__________________________________________________________________________________
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="elephant" name="elephant" class="jungle.Animals">
+		<property name="name" value="elephant"></property>
+		<property name="type" value="hatti"></property>
+	</bean>
+
+	<bean id="lion" name="lion" class="jungle.Animals">
+		<property name="name" value="lion"></property>
+		<property name="type" value="bagh"></property>
+	</bean>
+
+	<bean id="snake" name="snake" class="jungle.Animals">
+		<property name="name" value="snake"></property>
+		<property name="type" value="sarpo"></property>
+	</bean>
+
+	<bean id="jungle" class="jungle.Jungle">
+		<property name="foods">
+			<props>
+				<prop key="gorilla">banana</prop>
+				<prop key="bird">insects</prop>
+				<prop key="giraffe">leaves</prop>
+			</props>
+
+		</property>
+		<property name="animals">
+			<map>
+				<entry key="lion" value-ref="lion"></entry>
+				<entry key="elephant" value-ref="elephant"></entry>
+				<entry key="snake" value-ref="snake"></entry>
+			</map>
+		</property>
+	</bean>
+</bean
+
+
+AutoWiring:
+------------------
+
+It allows the beans to figure out the dependencies between the beans automatically
+
+Other options to link the beans are:
+
+1. Inner beans
+2. Using the setter and using  the ref in the bean property
+3. auto wiring...should have no ambiguity while autowiring the beans
+
+autowiring: by Type
+			by Name
+			by constructor...works by type so make sure that type is correct
+
+
+
+To exclude certain beans from autowiring is using autowire-candidate= "false" or using the primary ="true" to the beans
+
+
+
+Wiring With annotations:
+-----------------------------
+
+Need to select the context namespace from the namespace tab in the beans.xml
+Select the context tab in the bottom of the beans and right click and choose the <context:annotation-config></context:annotation-config>
+option
+
+Annotation is other alternative way to configure in spring besides the XML. We can mix both annotation and XML or choose to 
+use only one.
+Need to put the annotation like @AutoWired at the top of the setter method name for the beans to be wired.It is by default by type.
+It can be also placed infornt of the beans variable instance variable declaration or even on top of the coonstructor.
+You can mix autowiring methods using the options explained above.
+
+You don't even need the setter if you annotate and autowire the instance variables.
+
+Optional Beans:
+
+If you have certains that is not absolutely necessary and if it is present then it's ok and if not, no big deal then we can do like:
+
+@Autowired(required=false)
+public void setConsoleWriter(ConsoleWriter writer){
+	this.consoleWriter= writer;
+}
+...
+..
+public void writeConsole(String s){
+	if(consoleWriter !=null){
+		consoleWriter.write(s);
+	}
+}
+
+
+
+Using Qualifiers:
+Right click on the bean and select the insert qualifier option. The value field is actually a tag and in the setter method
+ add one more annotations called @Qualifier("tag_name")
+
+
+
+ Resource Annotation: JSR 250
+import javax.annotation.Resource
+ @Resource (name="idofthebean")
+
+
+
+ Annotation based INIT and DESTROY methods: (JSR 250)
+@PostConstruct
+before the init method
+
+@PreDestroy
+before the destroy method
+
+Make sure that your beans are singleton, if they are not like prototype then the init and destroy methods will not 
+be called and spring expects you to handle them
+
+Inject Annotation:
+------------------
+need to javax.inject in the pom.xml file to use the @Inject annotation
+Then finally update project by right click the project then maven and then the update project
+
+@Inject
+@Named(value="consoleWriter")
+before the method for setting the bean
+
+
+So as of now we have 3 way to annotate the beans, simple java way, JSR 250 and this above JSR 300
+
+
+
+Automatic bean discovery:
+---------------------------
+
+we do not need to have the beans in the xml. make sure that the context is turned on on the beans.xml tab
+Right click on the beans and select the component-scan.
+select the base package and set it to the package name ...use autocomplete for help
+
+Need to use the @Component annotation before the classes for the beans. IF there is ambiguity then 
+put a label like @Component("fileWriter") in the classes. Finally in the setter method for the beans,
+use the @Inject annotation. If you have used the label in the component annotation then below the @Inject annotation
+put @Named(value="idnamelike_fileWriter")
+
+TO put the values in the setter method,
+
+public void speak(@Value()"wala" String s){
+	this.speech=s;
+}
+
+this will set the speech to wala
+
+
+Spring Expression Language(SPEL)  #{"  "}
+-------------------------------------
+
+
+The regular method to set the property of a bean is to right click the bean and select the insert property
+ and set the name and value provided that the property has a setter method defined in the corresponding class.
+
+<bean id="robot" class="spel.Robot">
+		<property name="id" value="100"></property>
+		<property name="speech" value="Namaskar"></property>
+	</bean>
+
+ Now using the SPEL, 
+
+ <bean id="robot" class="spel.Robot">
+		<property name="id" value="#{14667 + 34}"></property>
+		<property name="speech" value="#{'This is from the spel'+ 'Method'}></property>
+	</bean>
+
+	The good thing is you can do some processing, even call methods as
+
+	<bean id="robot" class="spel.Robot">
+		<property name="id" value="#{14667 + 34}"></property>
+		<property name="speech" value="#{randomText.getText()}"></property>
+	</bean>
+	<bean id="randomText" class="spel.RandomText"></bean>
+
+	here instead of .getText() we can only do like 
+		<property name="speech" value="#{randomText.text+' ....wala kushal...'}"></property>
+
+	One more twist: <property name="id" value="#{randomText.text.length()}"></property> we make the id to be the length of the
+	randomText.getText().length() or randomText.text.length();
+
+Problem:
+If the getText() method returns null, then there is a problem and no beans can be instantiated so to address this issue, we can do like
+
+<property name="id" value="#{randomText.text?.length()}"></property> // put a ? mark before the dot(.) so that it will only call the 
+length() method if the getText() is not null. If there is null then it will just say null and the program will not crash. It is like a
+safe navigation operator
+
+
+Using the SPEL Annotations:
+
+@Component
+public class Robot {
+	private String id = "Default Robot";
+	private String speech = "Hello there";
+
+	@Autowired
+	public void setId(@Value("#{randomText.getText()?.length()}")String id) {
+		this.id = id;
+	}
+
+	@Autowired
+	public void setSpeech(@Value("#{randomText.getText()}")String speech) {
+		this.speech = speech;
+	}
+
+	public void speak() {
+		System.out.println(id + " :: " + speech);
+
+	}
+}
+
+
+We can also do like, 
+					@Autowired
+					public void setSpeech(@Value("#{new java.util.Date().toString()}") String speech) {
+						this.speech = speech;
+					}
+
+TO use the static methods, we need to use the T operator as
+
+			@Autowired
+			public void setSpeech(@Value("#{T(Math).PI}") String speech) {
+				this.speech = speech;
+			}
+				public void setSpeech(@Value("#{T(Math).sin(T(Math).PI/4)}") String speech) {
+				this.speech = speech;
+			}
+
+We use spelled out version of the logical operators like and or lt( for less than), le( <=). gt,ge, eq is for ==,  and so on.
+
+#{"5 lt 6 or 85.7 gt 90"}. Here we can also use the terniary operator i.e., ? 
+
+
+Google SPEL spring  for details.
+

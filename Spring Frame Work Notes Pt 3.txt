@@ -1,0 +1,93 @@
+Spring MVC:
+------------
+
+Largest framework for MCV applications. It helps to organize servlets and JSP.
+
+We need some kind of server and we are using the free tomcat server which is a java application server capable of running java
+web applications.
+
+
+To see which application are using the ports:
+
+netstat -o -n -a | findstr 0.0:80
+
+It will give the PID on the last column and look for that PID in the task manager.
+Run the tomcat as admin and stop any other instance of server running and then from the eclipse, try to start the server again.
+
+
+Dynamic web application:
+Choose the web module version as 2.5 instead of 3. Make sure to check the web.xml deployment descriptor while doing next.
+Once the project is created, right click on the project and create a new jsp file. And write something in the JSP file and save it.
+Then right click on that jsp file and run as> run on the server and run...you should see a eclipse browser opening up displaying
+the text from the jsp file. If you copy the url to the browser, you should see the same thing.
+This is the normal, non spring way.
+
+Bringing in Maven:
+-------------------
+Right click on the project and select configure and choose convert to maven project. Choose the group Id and artifact Id.
+Pom.xml file will be created and then add the jars: 
+													1. core
+													2. beans
+													3. context
+													4. jdbc
+													5. web
+													6. webmvc
+
+Then right click on the main project and create a servlet and choose the "Use existing servlet class or JSP", then click browse and choose
+the dispatcherServlet.
+
+
+
+
+
+
+Applet runs on the client, servlet runs on the server. It's as simple as that.
+
+More specifically, that applet is downloaded to the client, and executes in a JRE inside the browser, and can display whatever it wants 
+to display within the applet frame. The servlet instead runs on the server and (generally) produces a HTML page which is displayed in 
+your browser.
+Applets:
+    (Usually) small programs that execute inside of browser.
+    Does much, much more than JavaScript
+    Harness full power of Java: objects etc.
+    An Applet is a client side java program that runs within a Web browser on the client machine.
+	An applet can use the user interface classes like AWT or Swing.
+	Applet Life Cycle Methods: init(), stop(), paint(), start(), destroy()	
+
+ Servlets:
+    Server-side Java component which runs on the web server. 
+    The servlet does not have a user interface.
+	Servlet Methods: doGet(), doPost() 
+
+
+
+
+Dispatcher Servlet:
+---------------------
+All the request are routed through the dispatcher servlet. It then looks for controller which addresses the request. After
+adding the dispatcher servlet, check the web.xml file, you should see the dispatcher servlet and its mapping. Rename the servlet name
+to what you need and also change it in the mapping. Also create a xml file named something-servlets.xml in that web resources folder.
+The something here should be the name you just renamed.
+Also need to give the project to access the maven dependencies by right click on the project, properties, deployment assembly and goto
+add and java build path entries and add maven dependencies.
+
+Adding a Controller:
+--------------------
+The dispatcher will send the http request to the controller which is responsible for handling the request. So we need a controller. Right on
+the project and add a class...put it in some package, say A.
+Annotate the class with @Controller ( makes sense right :))
+make one method and annotate it with @RequestMapping("/")
+
+the / means that if we go to the root of the webapplication then this controller will be handling it. Now we to make spring load this as a 
+bean. Go to the offers-servlet.xml file and go to namespace and check the mvc and context. then add the component scan in the context bean
+ and name as the same package, A. And in the mvc tab, create the mvc annotations This will make the @Controller annotation work.
+
+View Resolver:
+---------------
+We are gonna use the InternalResourceViewResolver class as the view Resolver. First put all the jsp files in a folder inside the Webresources 
+folder.
+Then go to the offers-servlets and add bean in the beans tab. Give the class name of the bean as org.springframework.web.servlet.view.InternalResourceViewResolver
+Then add the properties called prefix and suffix and put the values like /WEB_INF/jsp/ and suffix as .jsp. What is does is the return of the
+controller as home to /WEB_INF/jsp/home.jsp
+That's it. Simple.
+

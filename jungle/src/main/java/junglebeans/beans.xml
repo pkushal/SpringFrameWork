@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="elephant" name="elephant" class="jungle.Animals">
+		<property name="name" value="elephant"></property>
+		<property name="type" value="hatti"></property>
+	</bean>
+
+	<bean id="lion" name="lion" class="jungle.Animals">
+		<property name="name" value="lion"></property>
+		<property name="type" value="bagh"></property>
+	</bean>
+
+	<bean id="snake" name="snake" class="jungle.Animals">
+		<property name="name" value="snake"></property>
+		<property name="type" value="sarpo"></property>
+	</bean>
+
+	<bean id="jungle" class="jungle.Jungle">
+		<property name="foods">
+			<props>
+				<prop key="gorilla">banana</prop>
+				<prop key="bird">insects</prop>
+				<prop key="giraffe">leaves</prop>
+			</props>
+
+		</property>
+		<property name="animals">
+			<map>
+				<entry key="lion" value-ref="lion"></entry>
+				<entry key="elephant" value-ref="elephant"></entry>
+				<entry key="snake" value-ref="snake"></entry>
+			</map>
+		</property>
+	</bean>
+</beans>
