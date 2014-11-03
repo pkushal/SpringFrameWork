@@ -12,6 +12,8 @@ do the forward engineer in the database tab. It will create a database.
 
 
 Using property files in the Spring:
+------------------------------------
+
 Create a separate package and right click and add file, name it to sth like jdbc.properties.
 It should end in .properties by tradition.
 Then in the beans.xml under the context add a bean using the context-property-placeholder and set the location to the
@@ -56,6 +58,8 @@ Now in the datasource bean we just created, right click on it and choose insert 
 from basicdataSource and set the value as ${jdbc.driver}. By this we are linking the jdbc.properties file's driver link to the dataSource bean using the
 insert property method.
 Similary, for the url,${jdbc.url};  password and username
+
+Finally need to do the annotation stuff to get it actually connected.
 
 JDBC template allows you to query database in an elegant way
 ---------------------------------------------------------------
