@@ -67,7 +67,7 @@ public class OffersDAO {
 				.update("update offers set name=:name, email=:email, text=:text where id=:id",
 						params) == 1;
 	}
-
+	@Transactional
 	public int[] create(List<Offers> offer) {
 
 		SqlParameterSource[] params = SqlParameterSourceUtils.createBatch(offer

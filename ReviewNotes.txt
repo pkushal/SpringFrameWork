@@ -434,7 +434,8 @@ Step 2: Copy and paste it in your project's web.xml file and modify as:
 Step 3: Copy the 
 			
 			<%@ taglib uri="http://java.sun.com/jsp/jstl/sql" prefix="sql" %> 
-																					and paste it in the home.jsp file.
+			 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+		and paste it in the home.jsp file.
 
 Step 4:  Copy the sql code and paste it in the home.jsp file (may be in the body) and edit to match your database content and database name.
 
@@ -449,7 +450,7 @@ Also copy and paste the following JSTL code:
 		Name: ${row.name}<br />
 		</c:forEach>
 
-Step 5: In the pom.xml add a jar called mysql connector. Update the project...make sure maven dependencies are in the deployment 
+Step 5: In the pom.xml add a jar called mysql connector and java jstl. Update the project...make sure maven dependencies are in the deployment 
 		assembly. It should work......Cheers
 
 
@@ -526,7 +527,8 @@ in the controller. (Rather than just jstl connecting to our jndi datasource)
 			{
 			return null; 
 			}
-		For this service object to work, we need the OffersDao. How are we gonna have the offersDAO here....inject it as:
+			
+			For this service object to work, we need the OffersDao. How are we gonna have the offersDAO here....inject it as:
 			private OffersDao offersDao;
 
 			make a setter method and annotate the setter method with @Autowire.
@@ -557,3 +559,39 @@ in the controller. (Rather than just jstl connecting to our jndi datasource)
 						ID:  ${row.id}<br />
 						Name: ${row.name}<br />
 						</c:forEach>
+
+
+
+Step 7: Adding a New Controller
+		Right click on the controller package and add a class, say HomeController.
+		Put the @Controller annotation.
+		Make a method in there as:
+				public String showHome(){
+				return "home";
+				}
+
+		And in the OffersController you may do like,
+
+//logic here is I want to have a homepage and a offers page. I am modifying this page into a offers page.
+
+		@RequestMapping("/offers")
+		public String showHome(Model model) {
+		List<Offers> offers = offersService.getCurrent();
+		model.addAttribute("offers", offers);
+		return "home";
+	}
+
+	we will need to have the jsp files for each logical name from the controllers.
+	To link to the one jsp page from another we can use like
+
+<br><p><a href="${pageContext.request.contextPath}/offers">Show current offers</a></p>
+<br><p><a href="${pageContext.request.contextPath}/createoffer">Create offers</a></p>
+
+
+Step 8: Getting URL Parameters
+		@RequestMapping(value="/test", method=RequestMethod.GET)
+		public String test(Model model, @RequestParam("id") String identity) {
+		System.out.println("Id # is :"+identity);
+		return "offers";
+		//Run this application and go to http://localhost:8080/KushalDynamicWebApp/test?id=78 or any number
+		}

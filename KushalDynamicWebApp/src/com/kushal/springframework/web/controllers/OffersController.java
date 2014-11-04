@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.kushal.springframework.web.DAO.Offers;
 import com.kushal.springframework.web.service.OffersService;
@@ -39,10 +41,22 @@ public class OffersController {
 		this.offersService = offersService;
 	}
 
-	@RequestMapping("/")
-	public String showHome(Model model) {
+	@RequestMapping("/offers")
+	public String showOffers(Model model) {
 		List<Offers> offers = offersService.getCurrent();
 		model.addAttribute("offers", offers);
-		return "home";
+		return "offers";
+	}
+	
+	@RequestMapping("/createoffer")
+	public String createOffer() {
+		return "createoffer";
+	}
+	
+	@RequestMapping(value="/test", method=RequestMethod.GET)
+	public String test(Model model, @RequestParam("id") String identity) {
+		System.out.println("Id # is :"+identity);
+		return "offers";
+		//Run this application and go to http://localhost:8080/KushalDynamicWebApp/test?id=78 or any number
 	}
 }
