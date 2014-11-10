@@ -1,0 +1,234 @@
+Aspect Oriented Programming:
+----------------------------
+
+Extending the existing classes without touching the existing code base.
+
+Make a normal java project, have a main class called main and a class called Camera with method called snapped
+and configure it to maven. Add the dependencies:
+						1. core
+						2. beans
+						3. context
+						4. aspects (new bean added)
+
+
+Make a bean called camera in the beans tab. In the main, class this instantiate the bean for camera and call the snap method.
+Now make a Logger class in the same package and have a method called aboutToTakePhoto(). 
+
+The main idea is that when ever the snap method is called the aboutToTakePhoto() method need to be executed before that snap 
+method. In normal java we cannot do this without modifying the Camera class. We are gonna turn the Logger class into a aspect 
+which is gonna advice the Camera class.
+
+
+AspectJ is for doing the aspect oriented programming in java aside from spring. Spring supports part of aspectJ.
+
+
+Logger Class is called aspect and the method aboutToTakePhoto() is called advise. aboutToTakePhoto() method will advise the snap
+method.
+JoinPoint is a point in the program where the aspect can advise. AspectJ supports number of joinpoint while spring supports one 
+type of joinpoint, that's method execution joinpoint.
+
+PointCut defines the joinPoint where we are gonna run the code. We need pointCut to define the snap method as the joinPoint.
+
+Steps:
+	Make a bean for aspect Logger as logger.
+	In the namespace, check the aop.
+	Go to the aop tab and right click the bean and select aop config element.
+			Here we need to define the pointcut and the aspect
+	Right click the aop config beans and select the pointcut, set some id, say, camerasnap and expression as
+		execution(void com.kushal.spring.aop.Camera.snap())
+		This defines the pointcut, where the advise needs to come.
+	Now right click the config bean and select aspect and set the id as say, loggeraspect and ref as the logger. Here the logger 
+	is the bean we defined earlier.
+	Right click the aspect bean and select the execution option, say select the aop:before element and set the pointcut-ref as 
+	camerasnap and method as aboutToTakePhoto. 
+
+If you check the source it should look like:
+
+
+				<bean id="camera" class="com.kushal.spring.aop.Camera"></bean>
+				<bean id="logger" class="com.kushal.spring.aop.Logger"></bean>
+
+
+				<aop:config>
+					<aop:pointcut expression="execution(void com.kushal.spring.aop.Camera.snap())"
+						id="camerasnap" />
+					<aop:aspect ref="logger" id="loggeraspect">
+						<aop:before pointcut-ref="camerasnap" method="aboutToTakePhoto" />
+					</aop:aspect>
+				</aop:config>
+
+Now, whenever the snap method is called, the aboutToTakePhoto advise from the aspect will be called.
+
+We can also shorten this process by getting rid of the pointcut and using it directly in the aspect. In the beans.xml, aop tab,
+delete the point cut and in the before bean in the config, delete the pointcut-ref and put execution(void com.kushal.spring.aop.Camera.snap())
+in the pointcut. And the source code will look like:
+
+		<aop:config>
+		<aop:aspect ref="logger" id="loggeraspect">
+			<aop:before method="aboutToTakePhoto" pointcut="execution(void com.kushal.spring.aop.Camera.snap())" />
+		</aop:aspect>
+		</aop:config>
+This looks consise and cleaner.
+
+Did you think about the main java class.
+
+		Camera camera = (Camera) context.getBean("camera");
+		camera.snap();
+		//Here it is vital to have the bean named as camera which is just the lower case of the Camera class ;)
+		Since there is no Id specified in the Camera class, the default bean is the lower case of the class name.
+
+
+Annotations based Aspects:
+---------------------------
+It can be done using the xml or annotations.
+What we did till now is using the xml and the pros of using the xml is we don't even have to touch the class files.
+Annotations looks cleaner, less configuration.
+
+Get rid of the beans(Camera and logger) in the beans.xml and enable the context in the namespace and enable the
+component scan (give the base package) and annotation config. Put the @Component annotation in the logger and Camera class.
+It should work now.
+
+Now lets get rid of the xml codes for the aop in the source of beans.xml. Delete the codes for aop and let annotate the aspect
+class. We need to annotate with @Aspect annotation. Also need to put the before annotation in the method we want to advise.
+The aspect class will look like:
+
+			@Aspect
+			@Component
+			public class Logger {
+				@Before(value="execution(void com.kushal.spring.aop.Camera.snap())")
+				public void aboutToTakePhoto() {
+					System.out.println("About to take photo ...");
+				}
+			}
+
+One last step: Go to the aop tab in the beans.xml and right click the bean and select insert aop aspect autoproxy.
+Now it will work with annotation completely.
+
+
+Now what we want to reuse the point cut again and again, it will not be a good practise to use the execution statement again and again.
+What we will do is make a dummy method in the aspect class and use a @Pointcut annotation. So when ever we need to use that pointcut
+we will call that dummy method.
+
+		@Aspect
+		@Component
+		public class Logger {
+
+			@Pointcut("execution(void com.kushal.spring.aop.Camera.snap())")
+			public void dummy() {
+			}
+
+			@Before("dummy()")
+			public void aboutToTakePhoto() {
+				System.out.println("About to take photo ...");
+			}
+		}
+
+The source of beans.xml will look like:
+			
+			<context:annotation-config></context:annotation-config>
+			<context:component-scan base-package="com.kushal.spring.aop"></context:component-scan>
+			<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+
+	Unlike xml configuration, we need to touch the aspect class.
+
+
+
+
+
+
+WildCards in pointCut expression:
+----------------------------------
+@Pointcut("execution(void com.kushal.spring.aop.Camera.snap(..))")
+//Here the .. implies the snap method with any arguments
+
+
+We can also do like:
+	
+			@Aspect
+			@Component
+			public class Logger {
+				@Pointcut("execution(void com.kushal.spring.aop.Camera.snap(..))")
+				public void dummy() {
+				}
+
+				@Pointcut("execution(* com.kushal.spring.aop.Camera.snap(String))") // Here * will allow any return type from the method
+				public void dummy1() {
+				}
+
+				@Before("dummy()")
+				public void aboutToTakePhoto() {
+					System.out.println("About to take photo ...");
+				}
+
+				@Before("dummy1()")
+				public void aboutToTakePhotoWithName() {
+					System.out.println("About to take photo with name");
+				}
+			}
+
+
+@Component
+public class Camera {
+	public void snap() {
+		System.out.println("snapped");
+	}
+
+	public void snap(int exposure) {
+		System.out.println("snapped for "+exposure+" milliseconds");
+	}
+	
+	public String snap(String name) {
+		System.out.println("snapped with "+name+" camera");
+		return name;
+	}
+}
+
+Output will be like:
+		About to take photo ...
+		snapped
+		About to take photo ...
+		snapped for 12 milliseconds
+		About to take photo with name
+		snapped with Nikon camera
+
+
+If I define the point cut as:
+
+		@Pointcut("execution(* com.kushal.spring.aop.Camera.*(..))")
+		It will advise for any method with any return type, with any method with any arguments in the Camera class.
+
+We can also use * for the class name as well:
+		@Pointcut("execution(* com.kushal.spring.aop.*.*(..))")
+
+
+	We can have wildcard for the package name as well:
+		@Pointcut("execution(* *.*.*(..))")	
+
+
+
+
+Advice Types:
+-------------
+
+Besides the before advice, we can also have, after (@After).
+After advise is also known as final advise and it will run weather or not there is expection in the method.
+
+@AfterReturning advise will run only if the method executes without any expection, normally
+@AfterThrowing is just the converse of the @AfterReturning, which will only execute if the method throws some exception
+
+
+Around Advise:
+-------------
+
+	@Around("dummy()")
+		public void aroundAdvice(ProceedingJoinPoint p) {
+			System.out.println("Around Advice...(before)...");
+			try {
+				p.proceed();
+			} catch (Throwable e) {
+				System.out.println("In around advise " + e.getMessage());
+			}
+			System.out.println("Around Advice...(after)...");
+	}
+
+	This is the most powerful one. It can run around the method like before  method and after the method.

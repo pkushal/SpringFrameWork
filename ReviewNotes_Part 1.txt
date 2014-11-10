@@ -1,0 +1,597 @@
+Beans Review:
+-------------
+	To insert to properties to the bean, say we  have a field called:
+
+	private int taxId;
+	 and we have need to have a setter for this field. 
+
+	 Always make the setter using the eclipse, so that the capitalization is perfect as:
+
+	 public void setTaxId(int taxId){
+	 	this.taxId= taxId;
+	 }
+
+	 Now in the beans, right click and go to Insert property and in there put the name just same as the private field name.
+	 Just do it  do way to avoid problems. Finally give the value you like.
+
+
+
+	 Dependency Injection:
+	 ----------------------
+	 If you have a Object that requires another bean in it.
+
+	 If you have a constructor defined and say it takes two string then you need to have something called constructor args in the beans.
+	 Create a bean and right click and set 2 constructor agrs, one for each string field. Put the name, same as the field name and value you like.
+	 You only need to do this if you have a constructor defined.
+
+	 Now while think of a scenario where you have to insert a bean into another bean, say a person bean needs to have a address bean. For that 
+	declare private field called address of type address in the Person. Remember how to set the setter method. Now in the person bean, go to
+	insert property and make sure the name is same as the private field name. The twist this time is instead of the value, we will use the ref.
+	In the ref, give the name of the address bean you have created.
+	This is dependency injection, we are injecting dependency (address) in the person bean.
+
+
+AutoWiring:
+------------
+
+Types of beans are clear.
+In the beans, if you click on the beans, you will see the option of auto wire, like by type, name, constructor etc.
+If you main bean say, logger requires two beans called consolewriter and filewriter which are different.
+Now say you have beans for logger, consolewriter and filewriter defined..nothing done...nothing set, no setter or no ref..no nothing done.
+But the beans looks clear as you can tell this bean belongs here and this belongs there, then go to the main logger bean and set the
+auto wire to by type and it should work just fine. No nothing required.
+It might be not a good idea in the big project and it should have no ambuiguity.
+
+By name:
+	We want to autowire but they have the same type or implements the same interface. We can then use the autowire by name.
+	Just go to the main logger bean and this time select autowire by name. this time the id of the beans (consolewriter and filewriter) should be
+	same as defined in the field in the logger class. This time there is Id for the consolewriter and filewriter beans not name.
+
+
+By Constructor:
+Again there is ambiguity. Both beans to be injected are of same type. To wire by constructor, you will need to have a constructor with correct type of
+bean to be supplied in the constructor. Obvious right.
+Important to note that it will crash as there is no default constructor since I just made a coustom construct to use the autowire by constructor. So 
+go to the main logger bean and select by construtor in the autowiring option.
+
+
+
+
+Wiring with annotation:
+------------------------
+
+Say we have the same beans, logger, consolewriter and filewriter beans. No nothing done yet.
+
+GO to namespace in the beans.xml and select the context there. Context tab will pop up there. 
+GO to context tab, right click the bean and select the context-annotation-config. Just that. No setting there.It just tell spring that we
+want to configure beans using the annotations.
+
+
+		Autowire Annotation:
+	    ---------------------
+
+	    This is nice any easy way.
+	    In the logger class we have set method for the consolewriter and filewriter and they both expect a bean for the logger class to work
+	    properly. This way works purely by TYPE.
+
+	    Just add the @Autowire annotation in the setter method for each of the field setter method. It should work.
+	    Easy huh.
+	    It is purely working with type..but not so flexible.
+
+	    *** Other thing is that you can put the @Autowire annotation infront of the private fields instead of the setter methods itself.
+	    Up to this point we do not have any constructors.
+
+
+	    We can also autowire by constructors as well. Make the constructor using the eclipse.
+	    And just put the @Autowire annotation infront of the constructor.
+	    You can also mix the autowiring using the constructor and the setter. Say out the two beans to be injected, you only have one bean in the
+	    constructor, then you can put the autowire in the constructor and one in the other bean's setter method.
+
+	    Just a note: Since the @Autowiring is purely based on the type, you do not have to have the setter name matched as before, only the type 
+	    has to be correct. By for simplicity and ease to remember, just follow the convention.
+
+	    *** One final note, you don't even need the setter method for the field if you @Autowire the private field itself. THIS MIGHT BE HANDY KUSHAL.
+
+				    Optional bean:
+				    --------------
+				    For optional beans just put @Autowire(required=false)...It only injects bean, if found.
+
+
+
+	    Qualifier Annotation:
+	    ---------------------
+	    Helps to narrow down the bean selection.
+	    If there is more than one qualifying bean say, consolewriter and squirrel, then spring will be confused. Go to the bean for the consolewriter and right
+	    click the consolewriter bean and go to beans > insert qualifier element. Put some value in the value field, say "toConsole".
+	    Now go to the logger class and in the setter method for the consolewriter put another annotation called @Qualifier and label as "toConsole" as:
+	    @Qualifier("toConsole"). This is just tagging the bean we want to use.
+	    You can also you the qualifier annotation in the classes and the setter method. Just simple.
+
+
+	    Resource Annotation (JSR-250):
+	    -------------------------------
+	    Same beans, no nothing changed.
+	    @Resource will work just as the @autowire if there is no ambiguity. This work by NAME and then narrows bean by type. If there is ambiguity, just do like
+
+	    @Resource (name="squirrel") infornt of the setter method
+
+
+
+	    Init and destroy method using the JSR-250:
+	    ------------------------------------------
+	    Say we have init and destroy method to be executed after the bean is created and before the bean is destroyed.
+	    Just use @PostConstruct and @PreDestroy in the init and destroy method. Beans need to be singleton. If it is prototype spring expect you to handle the
+	    destroy method.
+
+
+
+	    Inject Annotation (JSR -330):
+	    -----------------------------
+	    Need to add dependeny in the pom.xml and look for the jar javax.inject and add it..update the project
+	    If you type @Inject infront of the setter methods. It is more sensitivity to ambiguity.
+	    You can use the @Named annotation to address the ambiguity as @Named (value="consoleWriter") just below the inject annotation
+
+
+	    Automatic bean discovery:
+	    -------------------------
+	    You don't even need the beans definition in the beans.xml that is you don't even need to create the beans for consolewriter and filewriter.
+	    ***THIS LOOKS INTERESTING***
+
+	    Go to the namespace in the beans.xml file and go the the context tab and right click the root bean element and select the context-component-scan
+	    Now it has the base package, put the package name where the classes of the beans reside, that you want to use. Umm see the importance of package.
+
+
+	    Now go to the logger class and put the annotation called @Component above the class of logger, consolewriter and filewriter clas, all which are required
+	    for the beans. If there is ambitguity, just do like @Componet("fileWriter") in the class and put the another annotation called Named as
+	    @Named(value="flieWriter") in the setter method where there is ambiguity.
+
+
+
+	    Setting Property values via annotation:
+	    ----------------------------------------
+	    Say we have turned on component scanning.
+	     public void setId(int id)
+	    {
+	    this.id= id;
+	    }
+
+	    now to set the value to this bean, we can use the @Value annotation as:
+
+
+	    @Inject or @Autowired or @Resource
+	    public void setId(value("123") int id) //even thouugh id is string we have insert the 123 as string but it will be recognized as integer.
+	    {
+	    this.id= id;
+	    }
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Connection to the database:
+---------------------------
+It's simple.
+
+Step 1: Create a maven file.
+Step 2: add the dependencies:
+						a. core
+						b. beans
+						c. context
+						d. mysql-connector
+						e. commons-jdbc
+						f. spring jdbc
+		Do I need to tell you to update the project ? Tomcat installed or there is mysql database installed and there is some data?
+		It's obvious right ?
+
+step 3: Make 3 packages in the main/java
+						1. for the beans, say beans
+							here we will have a beans file, spring beans config file called beans.xml
+						2. for the properties, say properties
+							here we will have a file of type file called jdbc.properties
+							It is important to put the suffix as .properties
+						3. for all the java files, say databaseConnection.
+							here we will have the main java file
+							then one for the offers
+							finally one for the DAO, say offersDao
+
+
+Step 4: Inside the properties paste the following:
+						jdbc.username= root
+						jdbc.password= root
+						jdbc.driver = com.mysql.jdbc.Driver
+						jdbc.url= jdbc:mysql://localhost:3306/springframework
+
+						Change the credential  and database name as required.
+
+Step 5: In the beans.xml file in the beans package, enable the context from the namespace and in the context tab,
+		right click and check the placeholder and set the loacation as properties/jdbc.properties.
+		Also enable the component scanning  and set the base package as the name of the package where all your java
+		files resides, here name of the package as in step 3.3 (databaseConnection)
+
+Step 6: In the Offers java file in the databaseConnection package, make fields as in the columns name in the database and also
+		make the getters and setters. Also enable the toString() method.
+
+
+Step 7: Now let's make a bean called dataSource in the beans.xml. Put the class for the beans as 
+					org.apache.commons.dbcp.BasicDataSource
+		Also put close on the destroy method.
+
+		Then right click on the beans and select property element. We need 4 property element as below:
+
+		driverClassName			${jdbc.driver}
+		url						${jdbc.url}
+		username				${jdbc.username}
+		password				${jdbc.password}
+
+
+Step 8: Now in the OffersDao java file, we need a elegant way to interact to the database. So we have spring-jdbc jar file.
+		We will have a field called, jdbc of type NamedParameterJdbcTemplate.
+
+					private NamedParameterJdbcTemplate jdbc;
+
+		Now make a setter method for this field.
+		Then we will modify that setter method to 
+
+					@Autowired
+					public void setDataSource(DataSource jdbc) {
+						this.jdbc = new NamedParameterJdbcTemplate(jdbc);
+					}
+
+
+Step 9: Now to intercat to the database, we need some methods, say we want to list all the enteries from the database and we will call it 
+		getOffers() which will return a List of the Offers Object
+
+
+					public List<Offers> getOffers() {
+						return jdbc.query("select * from offers", new RowMapper<Offers>() {
+
+							public Offers mapRow(ResultSet rs, int rowNum) throws SQLException {
+								Offers offer = new Offers();
+								offer.setId(rs.getInt("id"));
+								offer.setName(rs.getString("name"));
+								offer.setEmail(rs.getString("email"));
+								offer.setText(rs.getString("text"));
+								return offer;
+							}
+
+						});
+					}
+
+			Also need to use the @Component  annotation in the DAO class. Furthermore we can do like:
+				@Component ("offersDao")
+				we can then use the same offersDao bean in the main class as shown below.
+
+
+
+Step 10: Finally in the main method, we will do like
+
+					public static void main(String[] args) {
+					ApplicationContext context = new ClassPathXmlApplicationContext(
+							"beans/beans.xml");
+
+					OffersDao offersDao = (OffersDao) context.getBean("offersDao");
+
+					List<Offers> list;
+
+					list = offersDao.getOffers();
+
+					for (Offers off : list) {
+						System.out.println(off);
+					}
+
+					((ClassPathXmlApplicationContext) context).close();
+
+				}
+
+Step 11: That's it. Remember Su-Ha=Ri.... this is Su ;)
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Basic non spring app:
+---------------------
+Create a new dynamic web application. While creating the web app be sure to select the web module version as 2.5 instead of 3 and also select the
+server as apache tomcat.
+
+Right click on the main project and create a jsp file and write something. Then right click on that jsp file and do run as run on server
+You should see the text you have written on the jsp file on the eclipse browser.
+That's it.
+
+
+
+
+
+Springify:
+-----------
+Step 1: Make a non spring dynamic web application file. Make sure it works. It should have web.xml file in the WEB-INF folder.
+Step 2: Right click the main project and configure, convert to maven project.
+		You will need to put the group Id and artifact Id while converting to the maven project.
+
+Step 3: Need to add atleast the folllowing dependencies:
+			1. core
+			2. beans
+			3. context
+			4. web
+			5. webmvc
+		Do I need to tell you to update the project, huh?
+
+NOTE: Just a heads up in this step.
+				We will need a Dispatch servlet: All the http request will be routed to this dispatcher servlet
+				We will then need controller. Dispatcher servlet will direct the request to the appropriate controller
+				Finally we will need a View Resolver to send the response to the http request. The controller will decide which view to respond with.
+
+Step 4: "Adding the dispatcher servlet"
+		Right click on the main project and go to others and scroll down to web and select servlet
+		Check the box, called use an existing servlet class or jsp and click browse.
+		Then choose the DispatcherServlet. If it is not there your jar is not complete.
+
+Step 5: Go to the web.xml and modify the mapping of the dispatcherServlet
+
+
+
+					<description></description>
+				    <display-name>offers</display-name> // CHANGED THE NAME
+				    <servlet-name>offers</servlet-name> // CHANGED THE NAME
+				    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+				    <load-on-startup>1</load-on-startup> // THIS ONE IS ADDED
+				  </servlet>
+				  <servlet-mapping>
+				    <servlet-name>offers</servlet-name> // CHANGED THE NAME TO MATCH THE CHANGE IN THE UPPER SECTION
+				    <url-pattern>/</url-pattern> // THIS ONE IS MODIFIED
+				  </servlet-mapping>
+
+
+
+Step 6: Now what happens is that DispatcherServlet will by default some xml file from the WEB-INF folder. So we make xml file named
+		whatever name we put in the servlet-name in step 5, hyphen servlet. So it will be offers-servlet.
+		Right click the WEB-INF folder and other, scroll down to spring section and select spring bean config file and call it
+		offers-servlet (in this case).
+
+
+Step 7: Tomcat doesn't know about your maven repo so we need to let it know where it is, right click the project and properties and
+		deployment assembly and click add and choose the java build path entries >next and select the maven dependencies > apply.
+
+
+
+Step 8: "Adding a Controller"
+
+		Right click on the project and select class. While making the class, also make the package name too like
+			com.kushal.springframework.web.controllers and a class name like OffersController
+		Copy this package name, you will need it very soon.
+
+Step 9: Go to the class you just made and annotate with @Component.
+		May be give a method as:
+
+		@RequestMapping("/") //THIS "/" WILL BE HANDLING THE REQUEST TO THE ROOT OF THE WEB PAGE
+		public String showHome()
+		{
+			return "home"; //IT FIGURES OUT WHICH PARTICULAR VIEW TO USE (LOGICAL)..BUT THE ACTUAL TECHNOLOGY ETC WILL BE HANDLED BY VIEW RESOLVER
+		}
+
+		We need to make spring load this as a bean, so for that we will go to steo 10.
+
+Step 10: Go to offers-servlet file, namespace and tick the mvc namespace and context namespace.
+		 Go to the context tab, right click the bean and add component-scan and in that, paste the name the package we copied in the
+		 base package.
+
+		 Go to the mvc tab and right the bean and add mvc-annotation-driven. This is what the controller annotation work.
+
+
+
+Step 11: "Adding the viewResolver"
+
+		The view resolver will be responsible to take the logical name from the controller make it into a actual view, a jsp file in this case
+		Right click on the WEB-INF folder and create a  folder to put the jsp files, say name it jsps.
+		You will drag the home.jsp into that folder.
+
+		Go the beans in the offers-servlet and add a bean and give a id, say jspViewResolver and for class name paste as:
+
+			org.springframework.web.servlet.view.InternalViewResolver, browse and select that.
+			If you go to the downloaded dependencies you will find that, not a big deal.
+
+			Now we need to add prefix and suffix to the bean we just created (jspViewResolver). Right click it and beans and insert property element
+			and set the name as prefix and value as /WEB-INF/jsps/   We are setting it relative to the location of where all the jsps
+			will reside.
+			Similarly, add one more insert property element, name as suffix and value as .jsp
+			 What it does is prefix and suffix  will surround the logical name from the controller.
+
+
+Step 12: Right click the project and run as > run on server. You everything goes well you should see the content of the home.jsp file.
+
+					******THIS IS THE BASIC SPRING WEB APPLICATION*********
+
+
+
+
+
+Connection pooling to connect to a database:
+--------------------------------------------
+
+In web applications the web server(tomcat) will implement some kind of connection pooling for us. We need to configure depending upon
+what kind of database we are using, how you are gonna deploy your application.
+
+Step 1:	Copy that code and paste it in the context.xml file in the server folder and modify as required as:
+
+			<Resource name="jdbc/spring" auth="Container" type="javax.sql.DataSource"  //	WE COULD CALL IT ANY THING AS jdbc/anyname
+			maxActive="100" maxIdle="30" maxWait="10000" username="root"
+			password="root" driverClassName="com.mysql.jdbc.Driver"
+			url="jdbc:mysql://localhost:3306/springframework" />
+
+
+
+Step 2: Copy and paste it in your project's web.xml file and modify as:
+
+		 	<description>Spring Database</description>
+			<resource-ref>
+				<description>DB Connection</description>
+				<res-ref-name>jdbc/spring</res-ref-name>  // need to make sure that the name matches with the name in context.xml
+				<res-type>javax.sql.DataSource</res-type>
+				<res-auth>Container</res-auth>
+			</resource-ref>
+
+Step 3: Copy the 
+			
+			<%@ taglib uri="http://java.sun.com/jsp/jstl/sql" prefix="sql" %> 
+			 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+		and paste it in the home.jsp file.
+
+Step 4:  Copy the sql code and paste it in the home.jsp file (may be in the body) and edit to match your database content and database name.
+
+			<sql:query var="rs" dataSource="jdbc/spring">  // need to make sure that the name matches with the name in context.xml
+			select id, name, email, text from offers
+			</sql:query>
+
+Also copy and paste the following JSTL code:
+		
+		<c:forEach var="row" items="${rs.rows}">
+		ID:  ${row.id}<br />
+		Name: ${row.name}<br />
+		</c:forEach>
+
+Step 5: In the pom.xml add a jar called mysql connector and java jstl. Update the project...make sure maven dependencies are in the deployment 
+		assembly. It should work......Cheers
+
+
+
+
+
+
+Bringing in the DAO code:
+--------------------------
+1. In the java resources folder create a new package, say com.kushal.springframework.dao, to put all the java files like offers.java and OffersDao.java
+	I assume that the OffersDao has the @Component("offersDao") anotation there and @Autowire in the setDataSource method. In step 2 we will create a config file to let spring know we are here.
+
+2. Again, un the java resources folder create a new package, say com.kushal.springframework.config, to put all the config files (like spring bean configuration 	flies)
+	Create a spring bean configuration file and name it say, dao-context.xml
+	In that xml file, check the context in the namespace and add the annotation-config and component-scan and set the base package as the dao package that 
+	we just created.
+
+3. ContextLoaderListner to load extra spring bean config files. Extra xml container files for the spring beans.
+   What we are doing here is that we are letting the spring know about the new xml file we created. For that there is a 
+   file in the spring-web jar file, called contextLoaderListner, so we need to have this listner in the web.xml file.
+
+   We now need to add 
+   		<listener>
+			<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+		</listener>
+			in the web.xml. This will help load other xml files.
+
+4. Now we need to add the context param to let it know where is the new xml file as:
+
+		<context-param>
+				<param-name>
+					contextConfigLocation
+				</param-name>
+
+				<param-value>
+					classpath:com/kushal/springframework/web/config/dao-context.xml // LOCATION OF THE NEW xml FILE.
+																					// WE CAN HAVE MORE THAN ONE CLASSPATH
+				</param-value>
+		</context-param>
+
+
+5. Connecting our JNDI datasource to our DAO objects. Upto this point we have JNDI configured and we are outputting the objects from the
+	database using the JSTL, we have not used spring.
+
+	If I run now I will get error now because there is no bean to inject in the setDataSource method. Before we had bean in the database application.
+	So,
+
+	Go to the dao-context.xml and in the namespace check the jee check box.
+	In the jee tab, right click the bean and select the jee-jndi-lookup and in there set the id as dataSource (by naming convention...setDataSource ..remember something ;)).
+	set the jndi-name as jdbc/spring ... remember where have you seen this name... in the web.xml file
+	Click browse in the expected type  and you should see the DataSource-javax-sql. select that.
+
+
+	Do you remember that before the web spring application, we used to have a main java class where we would call the offersDao object and do something with it.
+	We don't have that here. so controller would be the equivalent to the main method here.
+
+	What can be done now?
+		we could call the offersDao in the controller and add that to the model and output it using the JSTL
+		There is one elegant method to do the same using the service layer. It is one more object which will be responsible for doing what the original
+		main method was responsible.
+
+
+Now what we want to do is use jndi to access the database using DAO and pass it to the model. For that we are gonna add a service layer
+in the controller. (Rather than just jstl connecting to our jndi datasource)
+
+
+6. Adding a service layer
+	
+	In the Java resoures, create a package called com.kushal.springframework.service
+	Create a new class in there called OffersService.
+	Annotate the class as @Service("offersService") which is equivalent to @Component.
+	make a method as:
+			public List<Offers> getCurrent()
+			{
+			return null; 
+			}
+			
+			For this service object to work, we need the OffersDao. How are we gonna have the offersDAO here....inject it as:
+			private OffersDao offersDao;
+
+			make a setter method and annotate the setter method with @Autowire.
+			Then we can change the return of the getCurrent to 
+						return offersDao.getOffers(); // here getOffers is the method in the OffersDao.
+
+
+			We will need one more spring bean configuration file. In the config package, create a spring bean config file and call it
+			service-context.xml and go to the namespace and check the context namespace. Add the annotation and the component scan and set the 
+			base package as the service package.
+
+			Copy the qualified name of the service-context.xml and add it in the web.xml with the classpath
+			When loading of our application occurs, it is also gonna load the service-context.xml, it will then automatically scan for the components and it
+			will find the offersService and so on.
+
+			Controller needs a way to get hold of the service so we make instance of offersService and set the setter method for it and autowire annotate it.
+
+			So now we can finally use the offersService in the controller as:
+				List<Offers> offers= offersService.getCurrent();
+				then,
+				model.addAttribute("offers", offers);
+				return "home";
+
+
+			Finally in the home.jsp there needs to be a foreach loop to iterate through the offers list as:
+
+						<c:forEach var="row" items="${offers}">
+						ID:  ${row.id}<br />
+						Name: ${row.name}<br />
+						</c:forEach>
+
+
+
+Step 7: Adding a New Controller
+		Right click on the controller package and add a class, say HomeController.
+		Put the @Controller annotation.
+		Make a method in there as:
+				public String showHome(){
+				return "home";
+				}
+
+		And in the OffersController you may do like,
+
+//logic here is I want to have a homepage and a offers page. I am modifying this page into a offers page.
+
+		@RequestMapping("/offers")
+		public String showHome(Model model) {
+		List<Offers> offers = offersService.getCurrent();
+		model.addAttribute("offers", offers);
+		return "home";
+	}
+
+	we will need to have the jsp files for each logical name from the controllers.
+	To link to the one jsp page from another we can use like
+
+<br><p><a href="${pageContext.request.contextPath}/offers">Show current offers</a></p>
+<br><p><a href="${pageContext.request.contextPath}/createoffer">Create offers</a></p>
+
+
+Step 8: Getting URL Parameters
+		@RequestMapping(value="/test", method=RequestMethod.GET)
+		public String test(Model model, @RequestParam("id") String identity) {
+		System.out.println("Id # is :"+identity);
+		return "offers";
+		//Run this application and go to http://localhost:8080/KushalDynamicWebApp/test?id=78 or any number
+		}

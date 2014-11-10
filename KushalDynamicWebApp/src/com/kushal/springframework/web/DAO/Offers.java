@@ -1,11 +1,24 @@
 package com.kushal.springframework.web.DAO;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
+
+import com.kushal.springframework.web.validations.ValidEmail;
+
 public class Offers {
 
-
 	private int id;
+	@Size(min = 5, max = 20, message = "Name is too short or too long")
 	private String name;
+
+	@NotNull
+	// @Pattern(regexp = ".*\\@.*\\..*", message =
+	// "Enter a valid email address")
+	@ValidEmail(min = 6, message="This email address is not correct")
 	private String email;
+
+	@Size(min = 10, max = 100, message = "Text too short or too long")
 	private String text;
 
 	public Offers(int id, String name, String email, String text) {
@@ -14,6 +27,7 @@ public class Offers {
 		this.email = email;
 		this.text = text;
 	}
+
 	public Offers() {
 		// this is just a default constructor
 	}
@@ -24,7 +38,6 @@ public class Offers {
 		this.email = email;
 		this.text = text;
 	}
-	
 
 	public int getId() {
 		return id;

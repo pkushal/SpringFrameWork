@@ -1,0 +1,260 @@
+Section 8:
+-----------
+
+
+Web forms:
+
+Serving static resources:
+-------------------------
+
+We have made a HTML file with some CSS in it. It is a good practice to separate CSS files from the jsp and html file.
+We create a new folder called resources in the webContent folder and in there we have main.css file (other>web>CSS).
+This static resource has to be made available to the dispatcher servlet. For that, go to the offers-servlet.xml file
+Then go to the mvc tab and then right click on the bean and insert mvc resources. Over there, location: location of the
+static resource that you wanna use, eg /resources/
+ and finally, the mapping to /static/* : What url will be used to access the resource
+ If I do like /static/**, here ** refers to all subfolders as well.
+ In the resources folder we also made the images folder and css folder to organize the files.
+
+
+Then we can link the css files to the jsp files and make the codes clean and organized.
+Link in the jsp file will look like:
+
+<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
+Since we had the static in the mapping of the resourecs, we need to put it in the link as well. Yeah it's a good thing.
+
+
+Adding hibernate form validation support:
+-----------------------------------------
+We use the BindingResult type to check the validation as:
+
+	@RequestMapping(value = "/doCreate", method = RequestMethod.POST)
+	public String doCreate(Model model, @Valid Offers offer,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			System.out.println("Errors in the form");
+			List<ObjectError> errors = result.getAllErrors();
+			for (ObjectError error : errors) {
+				System.out.println(error.getDefaultMessage());
+			}
+		} else {
+			System.out.println("Form valid");
+		}
+
+		System.out.println(offer);
+		return "offerCreated";
+	}
+
+	For validation we need a @Valid annotation... for that we need validation api  and for that we need to add javax.validation in the pom.xml
+	After that we need two more jars:
+										1. org.hibernate
+										2. hibernate-validator
+												Add the final version, don't go for the alpha or beta versions.
+
+										Upadate Maven project and may be clean the project and re run on the server.Also check the deployment assembly in 
+										the properties
+		One last step:
+				If we want to validate the size of the name, then we need to go to the Offers Class and annotate in the private filed over there as:
+					@Size(min = 5, max = 100)
+					private String name;
+
+
+
+More form validation tag:
+-------------------------
+google for javax.validation constraints for the different validation tags.
+
+	@Size(min = 5, max = 10, message = "Kushal, the name is too short or too long, make it 5-10 characters")
+	private String name;
+	@NotNull
+	@Pattern(regexp=".*\\@.*\\..*", message="Enter a valid email address")
+	private String email;
+	@Size(min = 20, max = 100, message = "Text too short or too long, make it 20-100 characters")
+	private String text
+
+
+
+Making forms remember the values:
+---------------------------------
+Need to google for spring form tag lib and find
+			<%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form" %>
+
+			Paste this in the createOffer.jsp
+
+Here we change the prefix to sf for spring framework. We  need to put this tag in the form, where we want the form the remember the values.
+
+			<sf:form method="post"
+				action="${pageContext.request.contextPath}/doCreate", commandName="offers">  // if the class name is Offers, make sure that you name it is offers
+
+				<div id="formtable">
+					<table>
+						<tr>
+							<td>Name:</td>
+							<td><sf:input path="name" name="name" type="text" /></td>
+						</tr>
+						<tr>
+							<td>Email:</td>
+							<td><sf:input path="email" name="email" type="text" /></td>
+						</tr>
+						<tr>
+							<td>Your Comments:</td>
+							<td><sf:textarea path="text" name="text" rows="10" cols="10"></sf:textarea></td>
+						</tr>
+						<tr>
+							<td><input id="submit" value="Submit" type="submit" /></td>
+						</tr>
+					</table>
+				</div>
+
+			</sf:form>
+
+	Here we also need to have the path tag, which is same as the fields of the offer object which is gonna hold the values. We also have the command name 
+	in the form tag which is the name of the attribute in the model which should contain a Offers object.
+
+
+
+
+
+
+Displaying form validation errors:
+----------------------------------
+<sf:errors path="name" cssClass="error" ></sf:errors>
+// here cssClass is standard tag from spring web mvc
+
+and in the css file just define a class called error and do something on how you want to display the error
+
+
+
+
+
+Creating Custom validation annotation:
+--------------------------------------
+
+We are gonna use the apache commons code for custom validation. For that click on one of the standard Validation annotation, say @Size
+Right click it and choose open declaration. It will open a class file for that standard annotation. Copy that and we are gonna modify it for our
+needs.
+Make a new package for validation and make an interface/class there and paste the code. then change accordingly
+
+------------------
+package com.kushal.springframework.web.validations;
+
+//all the imports deleted here
+
+@Target({ METHOD, FIELD, ANNOTATION_TYPE }) // where this annotation can be used
+@Retention(RUNTIME)
+@Documented
+@Constraint(validatedBy = com.kushal.springframework.web.validations.ValidEmailimplementation.class) // this is where the code that does the validation 
+																									reside, other code here are like bokra
+public @interface ValidEmail {
+
+	String message() default "This doesnot appear to be a  valid email address"; // this is gonna be the default error msg if the validation fails
+
+	Class<?>[] groups() default {};
+
+	Class<? extends Payload>[] payload() default {};
+
+	int min() default 5;// default minimum length of the email, this is gonna be the min
+						// attribute in the annotation
+
+						// in the main code we can do like @ValidEmail (min=10)
+
+	int max() default Integer.MAX_VALUE;
+
+}
+
+------------------
+package com.kushal.springframework.web.validations;
+
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
+
+public class ValidEmailimplementation implements
+		ConstraintValidator<ValidEmail, String> {
+	private int min; // we defined the minimum length of the email address
+
+	@Override
+	public void initialize(ValidEmail constraintAnnotation) {
+		min = constraintAnnotation.min(); //this min is coming from the annotation code above
+
+	}
+
+	@Override
+	public boolean isValid(String email, ConstraintValidatorContext context) {
+		if (email.length() >= min) { //here we are just checking the length of the email as a criteria for valid email address
+			return true;
+		}
+		return false;
+	}
+}
+
+
+Now we need more than the length, for that we don't have to write all the codes, we can use the code from the apache commons.
+Add a jar called commons-validator from the pom.xml
+Then we change the code in the ValidEmailimplementation as :
+
+				@Override
+				public boolean isValid(String email, ConstraintValidatorContext context) {
+					if (email.length() < min) {
+						return false;
+					}
+					if (!EmailValidator.getInstance(false).isValid(email)) {
+						return false;
+					}
+					return true;
+				}
+
+
+
+
+
+Hooking up Controller and Database code:
+------------------------------------------
+We add this in the offersServices:
+
+			public void create(Offers offers) {
+			offersDao.create(offers); // We have access to the offersDao and we also have the access to the create method
+			}
+
+
+In the offersController, we changed to the following:
+
+				@RequestMapping(value = "/doCreate", method = RequestMethod.POST)
+					public String doCreate(Model model, @Valid Offers offers,
+							BindingResult result) {
+						if (result.hasErrors()) {
+							return "createoffer";
+						}
+						offersService.create(offers); // if no error we are creating offers using the offerService and it's method 
+														// that we just created
+						return "offerCreated";
+					}
+
+
+
+Exception Handling in spring MVC:
+---------------------------------
+Two ways to handle the exceptions:
+					1. Controlller specific
+					2. handles all exceptions
+
+
+
+We made a class in the Controller package and called it DatabaseErrorHandler and put a method and annotation as:
+			
+
+			@ControllerAdvice
+		public class DatabaseErrorHandler {
+			// DataAccessException will be thrown for any runtime exception
+			@ExceptionHandler(DataAccessException.class)
+			public String handleDBException(DataAccessException ex) {
+				return "error";
+			}
+		}
+
+This will handle all the runtime database related exceptions. Finally we make a error.jsp files in the jsp folder and notify the user about the 
+error occured.
+
+~~~~~~~~~Now we will take a detour to ASPECT ORIENTED PROGRAMMING AND come back to the web applications~~~~~~~~~~~
+
+
+								Happy coding

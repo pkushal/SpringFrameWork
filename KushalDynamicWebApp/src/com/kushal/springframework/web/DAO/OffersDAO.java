@@ -42,6 +42,29 @@ public class OffersDAO {
 		});
 	}
 
+	public Offers getOffers(int id) {
+
+		MapSqlParameterSource params = new MapSqlParameterSource();
+		params.addValue("id", id);
+
+		return jdbc.queryForObject("select * from offers where id=:id", params,
+				new RowMapper<Offers>() {
+
+					public Offers mapRow(ResultSet rs, int rowNum)
+							throws SQLException {
+						Offers offer = new Offers();
+
+						offer.setId(rs.getInt("id"));
+						offer.setName(rs.getString("name"));
+						offer.setText(rs.getString("text"));
+						offer.setEmail(rs.getString("email"));
+
+						return offer;
+					}
+
+				});
+	}
+
 	public boolean delete(int id) {
 
 		MapSqlParameterSource params = new MapSqlParameterSource("id", id);
@@ -67,6 +90,7 @@ public class OffersDAO {
 				.update("update offers set name=:name, email=:email, text=:text where id=:id",
 						params) == 1;
 	}
+
 	@Transactional
 	public int[] create(List<Offers> offer) {
 

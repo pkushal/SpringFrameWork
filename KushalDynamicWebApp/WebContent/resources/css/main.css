@@ -1,0 +1,28 @@
+@CHARSET "ISO-8859-1";
+
+#formtable {
+	width: 400px;
+	padding: 10px;
+	border: 1px solid red;
+	background-color: yellow;
+	padding: 10px;
+}
+
+input {
+	width: 150px;
+}
+
+textarea {
+	width: 150px;
+	height: 150px;
+}
+
+body {
+	text-align: right;
+	vertical-align: top;
+}
+
+.error {
+	font-size: small;
+	color: green;
+}

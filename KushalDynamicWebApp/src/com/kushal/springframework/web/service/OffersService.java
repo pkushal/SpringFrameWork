@@ -21,4 +21,14 @@ public class OffersService {
 	public List<Offers> getCurrent() {
 		return offersDao.getOffers();
 	}
+
+	public void create(Offers offers) {
+		offersDao.create(offers);
+	}
+
+	//this method was just created for forcing the exception, not a part of the code
+	public void throwTestException() {
+		offersDao.getOffers(987979);
+
+	}
 }

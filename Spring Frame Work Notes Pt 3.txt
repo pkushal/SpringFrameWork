@@ -171,6 +171,8 @@ Google for jstl core and get this tag:
  Configuring JNDI data source:
  ------------------------------
 
+ OOOOOoooo this time we are connecting to the database :)
+
 Database Pooling:
 Database connection pooling is a method used to keep database connections open so they can be reused by others.
 Typically, opening a database connection is an expensive operation, so pooling keeps the connections active so that, when a connection is later requested, one of the active ones is used in preference to opening another one.
@@ -309,3 +311,8 @@ lots of steps
 	itself.
 
 	Finally in the home.jsp there needs to be a foreach loop to iterate through the offers list
+
+
+
+	That's it for now....now we are moving on to the web forms, HTML and some CSS.
+	Next notes on the review 2.
