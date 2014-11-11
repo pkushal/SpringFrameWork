@@ -232,3 +232,277 @@ Around Advise:
 	}
 
 	This is the most powerful one. It can run around the method like before  method and after the method.
+
+
+
+
+
+
+Proxies, Interfaces and aspects:
+---------------------------------
+
+Spring use proxy to achieve the AOP functionality. So the beans of the target class (Camera) is the instance of some other
+class which is a subclass of Camera class. If I do like (camera instanceOf Camera), it will return true. However, if the
+Camera class implements any interface, the bean of the target class will no longer be the instance of Camera class and it
+will be the instance of the interface(even though it implements more than one interface).
+
+There are two solution:
+		1. Change the way the proxy works.
+				For this you need to have 	<aop:aspectj-autoproxy></aop:aspectj-autoproxy> tag in the beans.xml
+			Go to the aop tab in the beans.xml and in the aspectj-autoproxy, check the proxy-target-class as true.
+			This should make the proxy bean an instance of the target class.
+
+			Side Effect:
+				It will make two instance of the Camera class and runs the constructor twice.
+
+		2. Go to the camera class and right click the Camera and select the refactor and select Extract Interface.
+		   Select all the method over there and name that interface.
+		   This should do the trick as it will change the casting in the main method  and also add an interface in the Camrea 
+		   class as well.
+
+	Note: However, I didn't face any problems even though I implemented some interfaces in the Camera class.
+
+
+
+
+"Within" PointCut Designator:
+------------------------------
+@Pointcut("within(com.kushal.spring.aop.camera)")
+
+Suppose I have 3 methods, A, B and C in the Camera class and when ever I invoke these methods in the main method like,
+	camera.A();
+	camera.B();
+	camrea.C();
+
+	Then the within pointcut will be be executed before all the 3 method of the camera class.
+
+We can also do like,
+		@Pointcut("within(com.kushal.spring.aop.*)") such that it will run for any method, in any class in the aop package.
+
+
+
+
+This, Target and matching Subpackages:
+--------------------------------------
+
+For any subpackage level execution, we can do like:
+
+		@Pointcut("within(com.kushal.spring..*)") //Notice the two dots (..)
+
+
+Target is specific than the within..it allows to select any method in any class as:
+			@Pointcut("target(com.kushal.spring.aop.Camera)")
+			public void targetDemo(){
+			}
+			@Before("targetDemo()")
+			public void targetDemoAdvise(){
+				System.out.println("*******Before Target advise*******");
+			}
+
+
+	It is simpler to read and it is focused to only one particular class and we cannot use any wildcard here.
+
+Instead of @Pointcut("target(com.kushal.spring.aop.Camera)"), we can also use like
+			@Pointcut("target(com.kushal.spring.aop.ICamera)") since the camera bean is also an instance of ICamera interface.
+
+
+"this" is actually about the type of the bean.
+		It is used as @Pointcut("this(com.kushal.spring.aop.Camera*)")
+
+		If the Camera class implements, ICamera interface then the this designator will not do any thing here because in the
+		main method we are casting the camera bean into Camera type.
+		For 'this' designator to work, we need to use the this designator as:
+			@Pointcut("this(com.kushal.spring.aop.ICamera)") because the camera bean is an instance of ICamera interface.
+
+
+
+
+Annotation specific Point Cut Designators(PCD)s:
+-------------------------------------------------
+
+Here we are targeting the methods and class with specific annotations.
+
+If I do like:  @Pointcut("within(@Deprecated com.kushal.spring..*)")
+ 				then this point cut will only work for the classes with @Deprecated annotation.
+ 				This applies to expression PCD as well.
+
+
+ A different type of targert PCD:
+
+
+				@Pointcut("@target(org.springframework.stereotype.Component)")  //Notice the @ sign before the target PCD and it
+				targets all the methods within all classes with this component annotations
+				public void targetDemo1(){
+				}
+				@Before("targetDemo1()")
+				public void targetDemoAdvise1(){
+					System.out.println("*******Before Target advise, annotation based*******");
+				}
+@within and @target are interchangable for most purpose.
+
+
+How to target annotations to methods:
+
+	@Pointcut("@annotation(java.lang.Deprecated)") // This is gonna target all methods with deprecated container
+	public void targetDemo1() {
+	}
+
+	@Before("targetDemo1()")
+	public void targetDemoAdvise1() {
+		System.out.println("*******Before Target advise, annotation based*******");
+	}
+
+
+@args:
+------
+
+	@Pointcut("@args(java.lang.Deprecated)")  //What this does is, it will advice to the method whose argument's class is deprecated.
+	public void targetDemo1() {
+	}
+
+	@Before("targetDemo1()")
+	public void targetDemoAdvise1() {
+		System.out
+				.println("*******Before Target advise, annotation based*******");
+	}
+
+	For instance, we have a method called public void snapCar(Car car){}, and the Car class itself is deprecated as @Deprecated, then it 
+	will advice for that method only.
+
+
+
+	The bean PCD:
+	-------------
+
+	@Pointcut("bean(camera)") // It will advise every method that the bean camera is invoked upon.
+	public void targetDemo1() {
+	}
+
+	@Before("targetDemo1()")
+	public void targetDemoAdvise1() {
+		System.out.println("*******Bean OCD*******");
+	}
+
+	We can also do like:
+			@Pointcut("bean(*camera)") or
+			@Pointcut("bean(*am*ra)") or any thing that makes sense.
+
+
+
+Args PCD:
+----------
+
+Suppose we have snap method overloaded as:
+	snap()
+	snap(int i)
+	snap(double d)
+	snap(int i, double d)
+
+
+
+	@Pointcut("@args()") //this will target any method with no arguments
+	@Pointcut("@args(int)") // methods with int as its only argument
+	@Pointcut("@args(int,double)")
+	@Pointcut("@args(com.kushal.spring.aop.Car)") // need to have full path to the class
+	@Pointcut("@args(int, *)") // two arguments, one int and one can be anything
+	@Pointcut("@args(int,..)") //int and zero or more arguments , here .. is called Ellipsis.
+
+	It is not looking for exact type but rather it is looking for types that can be cast to specified type. So, if I do like
+	@Pointcut("@args(Object)"), then it is looking for any kind of arguments that can be cast into Object type.
+	If you want exactly to look for int only, we need to do like, @Pointcut("@args(Integer)") and so on.
+	@Pointcut("@args(double)") will also accept int.
+
+
+
+
+Getting Arguments Using Args:
+------------------------------
+1. @Pointcut("execution(* com.kushal.spring.aop.Camera.snap())")
+	public void dummy() {
+	}
+	OR 
+	@Pointcut("target(com.kushal.spring.aop.Camera)")
+	public void dummy() {
+	} 
+	and then
+
+
+For around advise we need proceeding joinpoint.
+
+	@Before("dummy()")
+	public void beforeAdvice(JoinPoint jp) { // we use joinpoint and invoke methods like getArgs().
+											// Need to import import org.aspectj.lang.JoinPoint;
+		System.out.println("Before Advice...");
+		for (Object obj : jp.getArgs()) {
+			System.out.println("Args: " + obj);
+		}
+	}
+
+
+
+2. Using Args PCD
+	
+	@Pointcut("args(int)")
+	public void dummy() {
+	}
+		@Before("dummy()")
+		public void beforeAdvice(JoinPoint jp) { 
+		System.out.println("Before Advice...");
+		for (Object obj : jp.getArgs()) {
+			System.out.println("Args: " + obj);
+		}
+	}
+
+	
+	Or using the binding form:
+
+
+	@Pointcut("args(exposure)")
+	public void dummy(int exposure) {
+	}
+
+
+	@Before("dummy(exposure)")
+	public void beforeAdvice(JoinPoint jp, int exposure) {
+		System.out.println("Before Advice...");
+		System.out.println("exposure: "+ exposure);
+	}
+	Or:
+	@Before("dummy(exposure)")
+	public void beforeAdvice(int exposure) { //joinpoint is optional
+		System.out.println("Before Advice...");
+		System.out.println("exposure: "+ exposure);
+	}
+
+
+
+
+Combining PointCuts:
+---------------------
+	
+	@Pointcut("args(exposure)")
+	public void dummy(int exposure) {
+	}
+
+	@Pointcut("target(com.kushal.spring.aop.Camera)")
+	public void dummynew(int exposure) {
+	}
+
+	@Before("dummynew() && dummy(exposure)")   //Combined two pointCuts
+	public void beforeAdvice(JoinPoint jp, int exposure) {
+		System.out.println("Before Advice...");
+		System.out.println("exposure: " + exposure);
+	}
+
+
+	Or just like:
+
+	@After("within(com.kushal.spring.aop.*) && @annotation(Deprecated)") // within the aop package and any methods with @Depreated annotation
+								// Can also use the OR as || and also use as @After("within(com.kushal.spring.aop.*) && !@annotation(Deprecated)")
+	public void someAfterAdvise() {
+		System.out.println("After advise running...");
+	}
+
+
+	Added functionality using aspects:
+	----------------------------------

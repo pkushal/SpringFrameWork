@@ -7,7 +7,7 @@ public class Main {
 		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
 				"com/kushal/spring/aop/beans.xml");
 
-		Camera camera = (Camera) context.getBean("camera");
+		ICamera camera = (ICamera) context.getBean("camera");
 		try {
 			camera.snap();
 		} catch (Exception e) {
@@ -18,6 +18,7 @@ public class Main {
 		 * 
 		 * Lens lens = (Lens) context.getBean("lens"); lens.zoom(5);
 		 */
+		camera.snap(5);
 		context.close();// If you had used the application context instead of
 						// classpathxmlapplicationcontext, then you will need to
 						// cast it before calling the close().
