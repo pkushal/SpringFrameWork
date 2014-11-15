@@ -506,3 +506,132 @@ Combining PointCuts:
 
 	Added functionality using aspects:
 	----------------------------------
+
+	AOP Introduction: lets you add new functionality to your existing beans.
+
+	Suppose we have a simple classes called  Blender and Fan, plus a class called App, aspect called MachineAspect as shown below.
+
+
+	package com.kushal.spring.introduction;
+
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+public class App {
+	public static void main(String[] args) {
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(
+				"com/kushal/spring/introduction/beans.xml");
+		Blender blender = (Blender) context.getBean("blender");
+		blender.blend();
+		Fan fan = (Fan) context.getBean("fan");
+		fan.activate(5);
+		context.close();
+	}
+}
+
+
+package com.kushal.spring.introduction;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class Blender {
+	public void blend() {
+		System.out.println("Blending...");
+	}
+}
+
+
+package com.kushal.spring.introduction;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class Fan {
+	public void activate(int a) {
+		System.out.println("Fan activated at level " + a);
+	}
+}
+
+package com.kushal.spring.introduction;
+
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+@Component
+@Aspect
+public class MachineAspect {
+	@Around("within(com.kushal.spring.introduction.*)")
+	public void runMachine(ProceedingJoinPoint jp) {
+		System.out.println("Running... from aspect...");
+		try {
+			jp.proceed();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Completed..");
+	}
+}
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd">
+
+
+	<context:component-scan
+		base-package="com/kushal/spring/introduction">
+	</context:component-scan>
+	<context:annotation-config></context:annotation-config>
+	<aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+</beans>
+
+Now say, we want the Blender and the Fan classes to implement an interface called Machine. We can do that using the AOP introduction. We need to make
+an interface first.
+
+package com.kushal.spring.introduction;
+
+public interface IMachine {
+	public void start();
+}
+
+and we have a concrete implementation of the IMachine interface as:
+
+package com.kushal.spring.introduction;
+
+public class Machine implements IMachine {
+
+	@Override
+	public void start() {
+		System.out.println("Machine starting...");
+	}
+
+}
+
+Now what we do is make an instance of IMachine in the Aspect as :
+
+	@DeclareParents(value = "com.kushal.spring.introduction.*", defaultImpl = com.kushal.spring.introduction.Machine.class)
+	private IMachine machine;
+
+And we have an annotation called as @DeclareParents.
+Here, the instance of IMachine tells which interface is going to be implmented. In the annotation, the value tells, who is gonna
+implement that interface, and the defaultImpl tells us what is the default implementation gonna be.
+Believe it or not the Blender and Fan classes have now implemented the interface called IMachine. Remember, when the beans implements
+an interface, it no longer will be the instance of the target class but will be the instance of the interface it implements (or any interface 
+if more than one). 
+So what we do is refactor the Blender and Fan class and extract interface from there and name the interface as IBlender and Ifan.
+
+Finally in the main app class, the Casting of the beans to Blender and Fan type will be updated to IBlender and IFan types.
+Now we can invoke the defaultImplemented method on the beans as:
+
+	((IMachine) blender).start();
+	((IMachine) fan).start();
+
+	That's it ! no big deal.

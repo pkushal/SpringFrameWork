@@ -1,0 +1,1 @@
+Spring can implement security measures using servlets or applets in the spring MVC web app. We are doing the servlet based one here.
