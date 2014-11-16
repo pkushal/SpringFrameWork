@@ -1,1 +1,309 @@
 Spring can implement security measures using servlets or applets in the spring MVC web app. We are doing the servlet based one here.
+We will be continuing with the same KushalDynamicWebApplication program. Now we are gonna make a login form so that the users will have to
+login first and then only be able to create an offer.
+
+We are gonna use filters for the security. Filter is like a layer that will be introduced before the DispatcherServlet. DispatcherServlet is
+the entry point to our web application.
+
+Right click the project and New > Others > Web > Filter
+Make a package called com.kushal.spring.web.filters and Class name as TestFilter. This filter has nothing to do with Spring but spring will use
+this filter to implement the security stuffs.
+
+
+
+It will look like this:
+
+
+package com.kushal.springframework.web.filters;
+
+import java.io.IOException;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
+/**
+ * Servlet Filter implementation class TestFilter
+ */
+public class TestFilter implements Filter {
+
+    /**
+     * Default constructor. 
+     */
+    public TestFilter() {
+        // TODO Auto-generated constructor stub
+    }
+
+	/**
+	 * @see Filter#destroy()
+	 */
+	public void destroy() {
+		// TODO Auto-generated method stub
+	}
+
+	/**
+	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
+	 */
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+		// TODO Auto-generated method stub
+		// place your code here
+
+		// pass the request along the filter chain
+		chain.doFilter(request, response);
+	}
+
+	/**
+	 * @see Filter#init(FilterConfig)
+	 */
+	public void init(FilterConfig fConfig) throws ServletException {
+		// TODO Auto-generated method stub
+	}
+
+}
+
+
+Here destroy and init are the important methods. Also in the doFilter method, we do whatever the filter needs to do and there is also a
+chain.doFilter method, which is like a filter chain and in there the dispatcherServlet will go.
+Furthermore, if I add the following line in the doFilter method, it will print out the url address
+
+		System.out.println(((HttpServletRequest)request).getRequestURL()); // Here the request is cast into HttpServletRequest and its method
+		getRequestURL is invoked on it.
+
+This filter will also updated in the web.xml file as:
+
+<filter>
+    <display-name>TestFilter</display-name>
+    <filter-name>TestFilter</filter-name>
+    <filter-class>com.kushal.springframework.web.filters.TestFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>TestFilter</filter-name>
+    <url-pattern>/*</url-pattern>  //   /* to intercept all the url
+  </filter-mapping>
+
+
+
+
+Adding a Spring security Filter:
+---------------------------------
+
+Now we are gonna use spring security to provide the security features and manage users. 
+We need to add the following dependencies:
+			1. spring-security-core (there might be issues with the version of spring security and spring beans)
+			2. spring-security-web
+			3. spring-security-config
+
+		Do I need to upadate the project?
+
+We don't need the old filter that we added before, so we are gonna delete the TestFilter class and also make sure to delete the filter stuffs 
+in the web.xml file.
+
+We are gonna add a filter now using the standard spring class.
+
+Steps:
+
+1. Right click the project > New > Others > Web > Filters and this time instead of creating a class we are gonna use the existing class. Check the 
+existing filter Class and browse for: DelegatingFilterProxy and click next. Put the name as springSecurityFilterChain, here name is very important and 
+is case sensitive. Then click finish.
+
+This should be updated in the web.xml file as:
+
+	  <filter>
+    <display-name>springSecurityFilterChain</display-name>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>springSecurityFilterChain</filter-name>
+    <url-pattern>/*</url-pattern> // URL pattern has been modified to meet the needs.
+  </filter-mapping>
+
+  
+
+2. Now we need to add the config file for security in the config package. Add a spring bean config file in there and name it as
+	security-config.xml.
+	Now go to the web.xml file, add the classpath for this new config file as:
+					classpath:com/kushal/springframework/web/config/security-context.xml
+
+	In this config file's namespace, check the security check box. And in the sec tab, right click the beans and select
+		Insert authentication-manager. Right click the authentication-manager and select security authentication-provider.
+		Then right click the security authentication-provider and select user-service and again right click the user-service and select
+		Insert security:user.
+		Now in here, type admin for the authority (just made up for now)
+					 type, say Kushal for name and type, letmein for password.
+
+		Lets create one more user.
+
+		In the source code, it will look like this:
+
+
+
+		<security:authentication-manager>
+		<security:authentication-provider>
+			<security:user-service>
+				<security:user name="Kushal" authorities="admin"
+					password="letmein" />
+					<security:user name="John" authorities="admin"
+					password="passmein" />
+			</security:user-service>
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+
+	We have hard coded for now.
+
+	Now we need to specify what part of the web site are under access control. Go back the sec tab in the same config file and right click the bean and
+	select the security-http. In the right, scroll down and check the use expressions as true (we are gonna use expressions).
+	Right click the security:http and select the intercept url. In the right side, put the pattern as /** to deny access to all the url to the websites.
+	Then we will selectively allow access.
+
+	In the access, type as denyAll (case sensitive)
+
+	Again right click the http bean and select the form login element.
+	The source code will look like:
+
+		<security:http use-expressions="true">
+		<security:intercept-url pattern="/**" access="denyAll" />
+		<security:form-login />
+		</security:http>
+
+At this point, if we run the webapplication, spring will automatically generate a login form and even if you give the correct credential it will deny access.
+
+
+If add the following code in the security-context.xml, under the proper security tags,
+				<security:intercept-url pattern="/" access="permitAll" />
+				<security:intercept-url pattern="/offers" access="permitAll" />
+					then it will allow access to the root of the web page and the show offers web page and everything else will be denied.
+
+
+
+Now to do everything that valid user is allowed to do we need to authenticate other webpages as well. so we have add the following isAuthenticated() access
+to the following webpages as well. It looks like:
+
+		<security:http use-expressions="true">
+		<security:intercept-url pattern="/createoffer" access="isAuthenticated()" />
+		<security:intercept-url pattern="/doCreate" access="isAuthenticated()" />
+		<security:intercept-url pattern="/offerCreated" access="isAuthenticated()" />
+		<security:intercept-url pattern="/" access="permitAll" />
+		<security:intercept-url pattern="/offers" access="permitAll" />
+		<security:intercept-url pattern="/**" access="denyAll" />
+		<security:form-login />
+		</security:http>
+
+	Spring will execute the patterns from top to bottom and we need to put the denyAll at the end of the list, to deny the webpages that we might have
+	missed otherwise.
+
+	Upto this point, spring is not entertaining the static resources like CSS and also we are hard coding the user credentials. We will now make 
+	the users credential come from the database and make the static resources active.
+
+
+
+----------------------------------------------------------------------
+
+
+
+
+Serving the static resources:
+-----------------------------
+
+We need to add the following line in the security tag to allow static contents.
+			<security:intercept-url pattern="/static/**" access="permitAll" />
+
+	If we go to the offers-servlet.xml, we will see,
+		<mvc:resources location="/resources/" mapping="/static/**">
+		</mvc:resources>
+
+		The jsps have accessed the static resources as 
+		<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
+
+		And we have used the same /static/** in the security tags in the security-context.xml file.
+
+
+
+--------------------------------------------------------------------
+
+
+
+Customizing the login form:
+----------------------------
+
+We need to create a login form of our own and tell spring to use that.
+We are gonna go to the default spring login form and do the view source as we are gonna need some controls and naming.
+
+The view source looks like:
+
+	<html><head><title>Login Page</title></head><body onload='document.f.j_username.focus();'>
+	<h3>Login with Username and Password</h3><form name='f' action='/KushalDynamicWebApp/j_spring_security_check' method='POST'>
+	 <table>
+	    <tr><td>User:</td><td><input type='text' name='j_username' value=''></td></tr>
+	    <tr><td>Password:</td><td><input type='password' name='j_password'/></td></tr>
+	    <tr><td colspan='2'><input name="submit" type="submit" value="Login"/></td></tr>
+	  </table>
+	</form></body></html>
+
+
+Now we create login.jsp file in the jsps folder and paste the above code as a basis for it.
+
+We change the url path to action='${pageContext.request.contextPath}/j_spring_security_check' and also paste the css file from the createoffer.jsp
+we can modify that in the login form.
+Do whatever css edits you wanna make here.
+
+Now we need to make a mapping for the url and this jsp page, so we need to make a somekind of controller to handle the mapping.
+
+We are gonna make a different class in the controller package to handle the login based controller even though it is just one. We
+add something like this in the login controller:
+			@Controller
+			public class LoginController {
+				@RequestMapping("/login")
+				public String showLogin(){
+					return "login";
+				}
+			}
+
+		Also add the /login as the permit all in the security-context.xml file. Finally we need to tell spring to use this login form insted.
+
+		for that go to the sec tab in the security-context.xml and expand the http bean and click on the form-login and on the right,
+		enter /login for the login-page option.
+		It looks like <security:form-login login-page="/login" /> in the source code.
+
+
+	It works !!
+
+	Now if you notice that if you enter some garbage in the login form, it will show no error message because we have not entertained the
+	error handling in our custom login form.
+
+
+
+
+
+Displaying the login error in the custom login form:
+-----------------------------------------------------
+
+We are gonna do something clever to handle the error messages. In the same form-login tag, on the right there is something called
+authenticataion-failure-url and in there we are gonna paste as, /login?error=true, which simply is gonna redirect to the same login page but
+with a parameter called error set to true. Then in the login page, we do something like, if the error parameter is true, do something more than that.
+This is clever.
+
+<security:form-login login-page="/login"
+authentication-failure-url="/login?error=true" />
+
+
+In the login.jsp we are gonna use some jstl core tags to access the error variable. To use the jstl, we need to use the jstl taglib. We can just copy the 
+taglib from the home.jsp (<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>)
+
+
+if you just type <c:if and hit ctrl+space it will auto complete. And we can insert something like:
+	
+		<c:if test="${param.error!=null}">
+		<p class="loginerror">Login failed. User name and password do not
+			match out database. Please try again</p>
+		</c:if>
+And also update the css file for the loginerror class tag.
+
+
+
+
+Authorizing users from the database:
+-------------------------------------

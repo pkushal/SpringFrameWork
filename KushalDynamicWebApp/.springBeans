@@ -10,6 +10,7 @@
 		<config>WebContent/WEB-INF/offers-servlet.xml</config>
 		<config>src/com/kushal/springframework/web/config/dao-context.xml</config>
 		<config>src/com/kushal/springframework/web/config/service-context.xml</config>
+		<config>src/com/kushal/springframework/web/config/security-context.xml</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>
