@@ -10,6 +10,7 @@ public class DatabaseErrorHandler {
 	// DataAccessException will be thrown for any runtime exception
 	@ExceptionHandler(DataAccessException.class)
 	public String handleDBException(DataAccessException ex) {
+		ex.printStackTrace();
 		return "error";
 	}
 }

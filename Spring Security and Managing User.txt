@@ -307,3 +307,363 @@ And also update the css file for the loginerror class tag.
 
 Authorizing users from the database:
 -------------------------------------
+We are gonna use the existing MySQL database to store the credentials of the user to authenticated.
+In the security-context.xml, we need another authentication provider to have user from the database.
+In the sec tab, we are gonna add one more authentication provider and right click it and this time add, jdbc-user-service.
+Now all I need to do is, in the right side of the screen, I need to add the datasource ref.
+
+If you check the dao-context.xml file, we have a bean with id= dataSource to connect to the database. So here also we are gonna use the same
+bean to connect to the database. In the data-source-ref we are gonna enter dataSource. It will look like:
+
+	<security:authentication-manager>
+		<security:authentication-provider>
+			<security:user-service>
+				<security:user name="Kushal" authorities="admin"
+					password="letmein" />
+				<security:user name="John" authorities="admin"
+					password="passmein" />
+			</security:user-service>
+		</security:authentication-provider>
+		<security:authentication-provider>
+			<security:jdbc-user-service data-source-ref="dataSource" />
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+
+Now in the MySQL we have also added two new tables in the same springdatabase schema and named it users and authorities.
+In users table we have columns like username, password and enabled, while in the authorities we have username and authority.
+Spring-security dictates that the table has to be called users  and it should have the columns as username, password and enabled. The 
+default value of the tuple in the enabled column should be 1.
+
+Now we come back to the eclipse and right click the program and select run on server, it should work with no problem.
+If you want to use your custom tables and names rather than the spring then there is option (authorities-by-username-query and users-by-username-query)
+for that in the right side of the jdbc-user-service in the sec tab.
+
+
+
+-------------------------------------------------------------
+
+
+Creating an add user account form:
+-----------------------------------
+
+We need some kind of jsp to display the account creation form. So we copied the create offers jsp file and made a copy of it in the same jsp folder.
+Finally we made some changes and it looks like:
+
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link href="${pageContext.request.contextPath}/static/css/main.css"
+	rel="stylesheet" type="text/css">
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Create Account</title>
+</head>
+
+<body>
+
+	<sf:form method="post"
+		action="${pageContext.request.contextPath}/createaccount" commandName="offers"> //changed the form submit location
+
+		<div id="formtable">
+			<table>
+				<tr>
+					<td>UserName:</td>
+					<td><sf:input path="username" name="username" type="text" /></td>
+					<sf:errors path="username" cssClass="error" ></sf:errors>
+				</tr>
+				<tr>
+					<td>Email:</td>
+					<td><sf:input path="email" name="email" type="text" /></td>
+					<sf:errors path="email" cssClass="error" ></sf:errors>
+				</tr>
+				<tr>
+					<td>Password:</td>
+					<td><sf:input path="password" name="password" type="text" /></td>
+					<sf:errors path="password" cssClass="error" ></sf:errors>
+				</tr>
+				<tr>
+					<td>Confirm Password:</td>
+					<td><input name="confirmpass" type="text" /></td>
+				</tr>
+			
+				<tr>
+					<td><input id="submit" value="Submit" type="submit" /></td>
+				</tr>
+			</table>
+		</div>
+	</sf:form>
+
+
+</body>
+</html>
+
+
+
+Now we need to work on the new mappings now. We need to have the create account mapping.
+
+Now go the controller and login controller and make 2 copy of the existing showLogin method and modify it as:
+
+// first one is for the new account creation and second one is for after the account is created.
+	@RequestMapping("/newaccount")
+	public String shownewaccount(){
+		return "newaccount";
+	}
+	
+	@RequestMapping("/createaccount")
+	public String createAccount(){
+		return "accountcreated";
+	}
+	// so we need to make a new jsp file called account created to handle this view resolver.
+
+Now we need this form to be backed by somekind of bean object. In the newaccount.jsp file change the commandname from offers to user since
+we just made a copy last time. Now we need to create a bean called user in the dao package. Make a class called user in the dao package.
+
+In the User class we make the field like username, password, email (since we have this in the form), enabled and authority and also have getters and setter and also constructors using
+field and also a default constructor.
+It looks like:
+
+package com.kushal.springframework.web.DAO;
+
+public class User {
+
+	private String username;
+	private String password;
+	private String email;
+	private boolean enabled = false;
+	private String authority;
+
+	public User() {
+	}
+
+	public User(String username, String password, String email,
+			boolean enabled, String authority) {
+		this.username = username;
+		this.password = password;
+		this.email = email;
+		this.enabled = enabled;
+		this.authority = authority;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	public String getAuthority() {
+		return authority;
+	}
+
+	public void setAuthority(String authority) {
+		this.authority = authority;
+	}
+
+}
+
+
+
+Now, when we display the new account form we need to have the User bean, so go to the login controller and modify the showNewAccount controller
+as follows by adding a model and inserting the bean.
+
+		@RequestMapping("/newaccount")
+		public String showNewaccount(Model model){
+			model.addAttribute("user", new User());
+			return "newaccount";
+		}
+	
+	Need to add pertaining imports hai.
+
+Finally we need to add the newaccount, create account and accountcreated to the access rules. So we have add the following to the security-config.xml file
+
+		<security:intercept-url pattern="/newaccount" access="permitAll" />
+		<security:intercept-url pattern="/createaccount" access="permitAll" />
+		<security:intercept-url pattern="/accountcreated" access="permitAll" />
+
+
+Finally we will add a link to the new account webpage, in the login form. So we add the following codes to the login.jsp:
+
+	<p>
+		<a href='<c:url value="/newaccount"></c:url>'>Create New Account</a>
+	</p>
+
+
+It should work at this point :) cheers.
+
+
+-----------------------------------------------------------------------
+
+
+
+Making the create Account form work:
+------------------------------------
+
+Now we need user DAO.
+It looks like :
+
+
+package com.kushal.springframework.web.DAO;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSourceUtils;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+@Component("usersDao")
+public class UsersDAO {
+
+	private NamedParameterJdbcTemplate jdbc;
+
+	@Autowired
+	public void setDataSource(DataSource jdbc) {
+		this.jdbc = new NamedParameterJdbcTemplate(jdbc);
+	}
+
+	@Transactional // we want both the tables to be successfully update not just one.
+	public boolean create(User user) {
+
+		BeanPropertySqlParameterSource params = new BeanPropertySqlParameterSource(user);
+		
+		jdbc.update("insert into users (username, password, email, enabled) values(:username, :password, :email, :enabled)",params);
+		return jdbc.update("insert into authorities (username, authority) values(:username,:authority)",params) == 1;
+
+	}
+}
+
+
+Now we need to work on the service layer. It will look like this:
+
+package com.kushal.springframework.web.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.kushal.springframework.web.DAO.User;
+import com.kushal.springframework.web.DAO.UsersDAO;
+
+@Service("usersService")
+public class UsersService {
+
+	private UsersDAO usersDao;
+
+	@Autowired
+	public void setUsersDao(UsersDAO usersDao) {
+		this.usersDao = usersDao;
+	}
+
+	public void create(User user) {
+		usersDao.create(user);
+	}
+
+}
+
+
+
+Now we go and fix the controller. We will copy the following code from the OffersController which is resposible for taking the values from the
+form and putting it in the database.
+
+	@RequestMapping(value = "/doCreate", method = RequestMethod.POST)
+	public String doCreate(Model model, @Valid Offers offers,
+			BindingResult result) {
+		if (result.hasErrors()) {
+			return "createoffer";
+		}
+		offersService.create(offers);
+		return "offerCreated";
+	}
+
+
+
+	 and modify the stub method into this form  and the total login controller will look like:
+
+	 package com.kushal.springframework.web.controllers;
+
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.kushal.springframework.web.DAO.User;
+import com.kushal.springframework.web.service.UsersService;
+
+@Controller
+public class LoginController {
+	private UsersService usersService;
+
+	@Autowired
+	public void setUsersService(UsersService usersService) {
+		this.usersService = usersService;
+	}
+
+	@RequestMapping("/login")
+	public String showLogin() {
+		return "login";
+	}
+
+	@RequestMapping("/newaccount")
+	public String showNewaccount(Model model) {
+		model.addAttribute("user", new User());
+		return "newaccount";
+	}
+
+	@RequestMapping(value = "/createaccount", method = RequestMethod.POST)
+	public String createAccount(@Valid User user, BindingResult result) {
+		if (result.hasErrors()) {
+			return "createaccount";
+		}
+		user.setEnabled(true);
+		user.setAuthority("admin");
+		usersService.create(user);
+		return "accountcreated";
+	}
+}
+
+
+Up to this point, we don't have the email column in the database, so we add it in the database as a new column.
+Now if you re run it, it will be just fine, not a problem...user will be created in the database :) and can also login using the
+newly created account. wow.
