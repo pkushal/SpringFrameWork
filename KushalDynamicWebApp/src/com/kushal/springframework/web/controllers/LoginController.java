@@ -3,6 +3,7 @@ package com.kushal.springframework.web.controllers;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -35,11 +36,23 @@ public class LoginController {
 	@RequestMapping(value = "/createaccount", method = RequestMethod.POST)
 	public String createAccount(@Valid User user, BindingResult result) {
 		if (result.hasErrors()) {
-			return "createaccount";
+			return "newaccount";
 		}
 		user.setEnabled(true);
 		user.setAuthority("admin");
-		usersService.create(user);
+		
+		if(usersService.exists(user.getUsername())){
+			System.out.println("Duplicate username found...");
+			result.rejectValue("username", "DuplicateKey.user.username");
+			return "newaccount";
+		}
+		
+		try {
+			usersService.create(user);
+		} catch (DuplicateKeyException e) {
+			result.rejectValue("username", "DuplicateKey.user.username", "UserName already exists !");
+			return "newaccount";
+		}
 		return "accountcreated";
 	}
 }

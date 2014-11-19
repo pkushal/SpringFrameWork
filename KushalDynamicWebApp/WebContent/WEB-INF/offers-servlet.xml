@@ -21,4 +21,13 @@
 	
 	<mvc:resources location="/resources/" mapping="/static/**">
 	</mvc:resources>
+	
+	<bean id="messageSource"
+		class="org.springframework.context.support.ResourceBundleMessageSource">
+	<property name="basename"
+		value="com.kushal.springframework.web.messages.messages">
+	</property>
+	</bean>
+	
 </beans>
+

@@ -667,3 +667,150 @@ public class LoginController {
 Up to this point, we don't have the email column in the database, so we add it in the database as a new column.
 Now if you re run it, it will be just fine, not a problem...user will be created in the database :) and can also login using the
 newly created account. wow.
+
+
+
+100: Adding validation to the User form:
+-----------------------------------------
+
+We have added some annotation in the User class to validate Username, email and password. It looks like:
+
+	@NotBlank(message = "User name cannot be blank")
+	@Size(min = 4, max = 15, message = "User name must be between 4 and 15")
+	@Pattern(regexp = "^\\w{4,}", message = "User name can only contain alphanumeric and underscore")
+	private String username;
+
+	@NotBlank(message="Password cannot be blank")
+	@Pattern(regexp = "^\\S+$", message="Password cannot contain spaces")
+	@Size(min=4, max=8, message="Password must be between 4 and 8 char long")
+	private String password;
+	
+	@Email(message="Not a valid email")  // this annotation is from hibernate
+	private String email;
+	private boolean enabled = false;
+	private String authority;
+
+
+These annotations will handle the validation of the new account form.
+Now how about the handling of the duplicate usenname and keys in the database.
+
+
+
+Handling the duplicate username:
+---------------------------------
+
+If there is a duplicate key i.e., username then there will be database exception and what we try to catch that exception. If we catch the 
+exception, then we will return to the newaccount webpage. What we did is we figured out what exception is actually is thrown when there is a
+duplicate key. It is duplicateKeyException. We will try to catch this exception in the logincontroller while creating the user. It looks like:
+
+		@RequestMapping(value = "/createaccount", method = RequestMethod.POST)
+		public String createAccount(@Valid User user, BindingResult result) {
+			if (result.hasErrors()) {
+				return "newaccount";
+			}
+			user.setEnabled(true);
+			user.setAuthority("admin");
+							try {
+								usersService.create(user);
+							} catch (DuplicateKeyException e) {
+								result.rejectValue("username", "DuplicateKey.user.username", "UserName already exists !"); 
+								//here username is the pathname in the form we created. Second argument is the way we do it. Some name followed by 
+								// the class name and the error field. Third argument is the message for sf error in the form.
+								return "newaccount";
+							}
+			return "accountcreated";
+		}
+
+
+However this way of relying on the catching exceptions to validate the username duplicacy is not so good. So we will add some more code and make
+this method only the fallback plan.
+
+@RequestMapping(value = "/createaccount", method = RequestMethod.POST)
+	public String createAccount(@Valid User user, BindingResult result) {
+		if (result.hasErrors()) {
+			return "newaccount";
+		}
+		user.setEnabled(true);
+		user.setAuthority("admin");
+		
+		//This bit of code is added and also needed to add the following code in the UserService and UserDao class
+		if(usersService.exists(user.getUsername())){
+			System.out.println("Duplicate username found...");
+			result.rejectValue("username", "DuplicateKey.user.username", "UserName already exists !");
+			return "newaccount";
+		}
+		
+					try {
+						usersService.create(user);
+					} catch (DuplicateKeyException e) {
+						result.rejectValue("username", "DuplicateKey.user.username", "UserName already exists !");
+						return "newaccount";
+					}
+		return "accountcreated";
+	}
+
+
+UserService:
+
+public boolean exists(String username) {
+		return usersDao.exists(username);
+	}
+
+
+UserDAO:
+	public boolean exists(String username) {
+		return jdbc.queryForObject("select count(*) from users where username=:username", new MapSqlParameterSource("username", username), Integer.class)>0; 
+	}
+
+OR:
+
+	public boolean exists(String username) {
+		MapSqlParameterSource param = new MapSqlParameterSource();
+		param.addValue("username", username);
+		
+		return jdbc.queryForObject("select count(*) from users where username=:username", param, Integer.class)>0; 
+	}
+
+
+This works:
+Just fine. Cheers.
+
+
+--------------------------------------------------------------------
+
+
+
+Storing validation message in a property file:
+----------------------------------------------
+
+Up to now we have put the validation error message every where. Not a good practise. It is better to have them in one place. Suppose you website needs 
+to be translated into a new language, then looking for error message all around the code is a headache. So we put them in one place, say property file.
+
+So we create a new package for the messages called messages. There we'll have a file called messages.properties.
+Now we need to add a bean in the offers-servlet.xml file. Go to the beans tab and right click the root bean and create a new bean and call it
+messageSource and set it's class to ResourceBundleMessageSource. Next right click the bean just created and set the property and set the name as 
+basename and value as the com.kushal.springframework.web.messages.messages (No need to add .properties)
+
+Here basename is dictated by the ResourceBundleMessageSource jar file.
+
+Now we got rid of the message from the field annotation in the User Class and put it in the messages.properties file. The way to enter in this file is:
+
+	Size.user.username= your message here
+
+
+	Here Size is the constraint, user is the lowercased class name and username is the field.
+
+	This will work just fine. No problem
+
+
+	The message.properties will look like this:
+
+			Size.user.username = User name must be between 4 and 15.
+			NotBlank.user.username = User name cannot be blank.
+			Pattern.user.username = User name can only contain alphanumeric and underscore.
+
+			Size.user.password = Password must be between 4 and 8 char long.
+			NotBlank.user.password= Password cannot be blank.
+			Pattern.user.password = Password cannot contain spaces.
+
+			DuplicateKey.user.username = UserName already exists !

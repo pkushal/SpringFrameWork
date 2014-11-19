@@ -1,9 +1,23 @@
 package com.kushal.springframework.web.DAO;
 
-public class User {
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.NotBlank;
+
+public class User {
+	@NotBlank
+	@Size(min = 4, max = 15)
+	@Pattern(regexp = "^\\w{4,}")
 	private String username;
+
+	@NotBlank
+	@Pattern(regexp = "^\\S+$")
+	@Size(min=4, max=8)
 	private String password;
+	
+	@Email(message="Not a valid email")
 	private String email;
 	private boolean enabled = false;
 	private String authority;
