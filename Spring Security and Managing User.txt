@@ -814,3 +814,269 @@ Now we got rid of the message from the field annotation in the User Class and pu
 			Pattern.user.password = Password cannot contain spaces.
 
 			DuplicateKey.user.username = UserName already exists !
+
+
+
+
+
+
+Using JQuery to verify password:
+---------------------------------
+
+Created a folder called script under the resources folder and download the jquery from the jQuery website and choose Download the compressed, production jQuery 1.11.1 for downloads.
+Put the download to the same folder that we just created and rename it to jquery.js. Eclipse will try to validate the contents of the jquery file and we
+need to tell eclipse to not try to validate the jquery file.
+So, go to the project > Properties > Javascript > Include Path > source tab > Exclusion Pattern > Add > **/script/** and save.
+Clean Project and this should fix the problem.
+
+
+Now to debug and code in jquery, copy and paste the url of the newaccont form (http://localhost:8080/KushalDynamicWebApp/newaccount) and paste it
+in the google chrome and press Ctrl+shift+J. It will open the javascript console.
+
+To include the javascript, we add the following in the newaccount.jsp file.
+	<script type="text/javascript" src="${pageContext.request.contextPath}/static/script/jquery.js"></script>
+
+Now to have a hold to the password and the confirm password field, we make an id in the password and confirm password field as id="password" and 
+id="confirmpass"
+
+
+Below is the complete newaccount file
+---------------------------------------
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib prefix="sf" uri="http://www.springframework.org/tags/form"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<link href="${pageContext.request.contextPath}/static/css/main.css"
+	rel="stylesheet" type="text/css">
+<script type="text/javascript"
+	src="${pageContext.request.contextPath}/static/script/jquery.js"></script>
+
+<script type="text/javascript">
+	function onLoad() {
+		$("#password").keyup(checkPasswordsMatch);
+		$("#confirmpass").keyup(checkPasswordsMatch);
+		$("#details").submit(canSubmit);
+	}
+
+	function canSubmit() {
+		var password = $("#password").val();
+		var confirmpass = $("#confirmpass").val();
+
+		if (password != confirmpass) {
+			alert("Passwords do not match !!")
+			return false;
+		}
+		return true;
+	}
+
+	function checkPasswordsMatch() {
+		var password = $("#password").val();
+		var confirmpass = $("#confirmpass").val();
+
+		if (password.length > 3 || confirmpass.length > 3) {
+			if (password == confirmpass) {
+				$("#matchpass").addClass("valid");
+				$("#matchpass").removeClass("error");
+				$("#matchpass").text("Passwords match");
+			} else {
+				$("#matchpass").addClass("error");
+				$("#matchpass").removeClass("valid");
+				$("#matchpass").text("Passwords Do not match");
+				// we had to add/update the valid and error classes in the main.css file
+			}
+		}
+	}
+
+	$(document).ready(onLoad);
+</script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Create Account</title>
+</head>
+
+<body>
+	<h2>Create New Account</h2>
+	<sf:form id="details" method="post"
+		action="${pageContext.request.contextPath}/createaccount"
+		commandName="user">
+
+		<div id="formtable">
+			<table>
+				<tr>
+					<td>UserName:</td>
+					<td><sf:input path="username" name="username" type="text" /></td>
+					<sf:errors path="username" cssClass="error"></sf:errors>
+				</tr>
+				<tr>
+					<td>Email:</td>
+					<td><sf:input path="email" name="email" type="text" /></td>
+					<sf:errors path="email" cssClass="error"></sf:errors>
+				</tr>
+				<tr>
+					<td>Password:</td>
+					<td><sf:input id="password" path="password" name="password"
+							type="text" /></td>
+					<sf:errors path="password" cssClass="error"></sf:errors>
+				</tr>
+				<tr>
+					<td>Confirm Password:</td>
+					<td><input id="confirmpass" name="confirmpass" type="text" /></td>
+					<div id="matchpass"></div>
+				</tr>
+
+				<tr>
+					<td><input id="submit" value="Create Account" type="submit" /></td>
+				</tr>
+			</table>
+		</div>
+	</sf:form>
+
+
+</body>
+</html>
+
+
+
+------------------------------------------------------------------
+
+
+Using Property file values in the jsps:
+----------------------------------------
+
+We want to load the error and success messages on the newaccount.jsp from the messages.properties file. So we add the following message in the
+message file:
+	
+	UnmatchedPassword.user.password = Passwords do not match, try again.
+	MatchedPassword.user.password = Passwords match, Success !!	
+
+Now in this case we need the formati jstl taglib, so google it and copy and paste the following in the newaccount.jsp
+
+	 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+Last time we had done this to the annotations in the user file, like for size, pattern annotations.
+
+We then replaced the plain text with <fmt:message key='UnmatchedPassword.user.password'></fmt:message> and <fmt:message key='MatchedPassword.user.password'></fmt:message>. It's snippet looks like:
+
+	function canSubmit() {
+		var password = $("#password").val();
+		var confirmpass = $("#confirmpass").val();
+
+		if (password != confirmpass) {
+			alert("<fmt:message key='UnmatchedPassword.user.password'></fmt:message>")
+			return false;
+		}
+		return true;
+	}
+
+	
+----------------------------------------------------------------
+
+
+
+Adding Logout Link:
+--------------------
+
+We have created an new jsp file for to direct after logging out. It is called loggedout.jsp
+Now we need to have a mapping to it in the controller.
+
+We added the following in the loginController.
+
+	@RequestMapping("/loggedout")
+	public String showLogout() {
+		return "loggedout";
+	}
+
+Also, need to permit it in the security-context.xml file and add the following
+
+			<security:intercept-url pattern="/loggedout" access="permitAll" />
+
+Now in the security-context.xml file, in the sec tab, right click the http bean and select security-logout and on the right of it,
+in the logout-success-url, write /loggedout
+
+Now what about the logout button, upto now we have decided what we'll show after logout.
+So we will add the following in the home.jsp
+
+	<br><p><a href="<c:url value='/j_spring_security_logout'></c:url>">LogOut</a></p>
+
+	//here, /j_spring_security_logout is the standard from the spring
+
+This will work smooth no hiccups.
+
+
+----------------------------------------------------------------------
+
+
+
+Working with Roles:
+--------------------
+
+We are gonna make a webpage that will be only visible to users with certain authority.
+
+We have made a jsp file called admin.jsp and also mapped it using the controller in the homeController this time. Also we have made
+a new user called admin and went to MySQL workbench and set the authority as admin. By default the authority of any user is set to user.
+
+Now in the security-context.xml file we need to change the filtering as:
+
+		<security:intercept-url pattern="/admin" access="hasRole('admin')" />
+
+yeah It works, only if I log in as a user with admin role, I can access the admin.jsp page.
+
+
+
+-----------------------------------------------------------------
+
+
+Outputting text based on authentication status:
+------------------------------------------------
+
+We want the log out link to appear only if the user has logged in and the admin link appear if the user has admin rights.
+
+We would like to use the patterns in  http://docs.spring.io/spring-security/site/docs/3.0.x/reference/el-access.html and for that we will need
+to use spring security taglib ( <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %> )
+
+paste this taglib in the home.jsp; Also need to install the spring-security-taglibs dependency and update and all.
+
+So the home.jsp looks like:
+
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1"
+	pageEncoding="ISO-8859-1"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Kushal Dynamic</title>
+</head>
+<body>
+
+<h1>Welcome to Dynamic Web Application</h1>
+<br><p><a href="${pageContext.request.contextPath}/offers">Show current offers</a></p>
+<p><a href="${pageContext.request.contextPath}/createoffer">Create offers</a></p>
+
+<sec:authorize access="!isAuthenticated()">
+<p><a href="<c:url value='/login'></c:url>">Log In</a></p>
+</sec:authorize>
+
+<sec:authorize access="isAuthenticated()">
+<p><a href="<c:url value='/j_spring_security_logout'></c:url>">LogOut</a></p>
+</sec:authorize>
+
+<sec:authorize access="hasRole('admin')">
+<p><a href="${pageContext.request.contextPath}/admin">Admin</a></p>
+</sec:authorize>
+
+...
+
+It works and it's looking awesome.
+
+----------------------------------------------------------------------------
+
+
+Row Mapping with BeanPropertyRowMapper:
+---------------------------------------

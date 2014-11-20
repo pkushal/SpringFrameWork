@@ -26,6 +26,11 @@ public class LoginController {
 	public String showLogin() {
 		return "login";
 	}
+	
+	@RequestMapping("/loggedout")
+	public String showLogout() {
+		return "loggedout";
+	}
 
 	@RequestMapping("/newaccount")
 	public String showNewaccount(Model model) {
@@ -39,7 +44,7 @@ public class LoginController {
 			return "newaccount";
 		}
 		user.setEnabled(true);
-		user.setAuthority("admin");
+		user.setAuthority("user");
 		
 		if(usersService.exists(user.getUsername())){
 			System.out.println("Duplicate username found...");

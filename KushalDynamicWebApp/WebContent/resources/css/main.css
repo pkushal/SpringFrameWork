@@ -1,10 +1,10 @@
 @CHARSET "ISO-8859-1";
 
 #formtable {
-	width: 400px;
+	width: 500px;
 	padding: 10px;
 	border: 1px solid red;
-	background-color: yellow;
+	background-color: #F4E0D9;
 	padding: 10px;
 }
 
@@ -18,15 +18,20 @@ textarea {
 }
 
 body {
-	text-align: right;
 	vertical-align: top;
 }
 
 .error {
-	font-size: small;
-	color: green;
+	font-size: medium;
+	color: red;
+	font-weight: bold;
 }
 
 p.loginerror {
 	color: red;
+}
+.valid{
+	font-size: medium;
+	color: green;
+	font-weight: bold;
 }
