@@ -1080,3 +1080,294 @@ It works and it's looking awesome.
 
 Row Mapping with BeanPropertyRowMapper:
 ---------------------------------------
+Here we want the admin users to have access to all the users in the database. So we make some changes in the controller of the admin. We
+moved the controller for admin to the loginController to have more access to the userService. Then to have defined some method that we not
+defined before, so we also made a method in the UserService and the UserDao classes.
+
+In the login controller:
+			@RequestMapping("/admin")
+			public String showAdmin(Model model){
+				List<User> users =usersService.getAllUsers();
+				model.addAttribute ("users", users);
+				return "admin";
+			}
+
+In the UserServices:
+	public List<User> getAllUsers() {
+		return usersDao.getAllUsers();
+
+	}
+
+And finally in the UserDao:
+
+		public List<User> getAllUsers() {
+		return jdbc
+				.query("select * from users, authorities where users.username = authorities.username", BeanPropertyRowMapper.newInstance(User.class));
+		}
+
+Here we have used the BeanPropertyRowMapper class. The good aspect about this class is that, it maps the result of the query to the
+class supplied in the newInstance(User.class). This saves time to make your own rowMapper.
+
+Finally in the admin.jsp file we will display the list of users. For that we are going to use the jstl tag as
+	<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+	 and we make the table in the admin.jsp file as
+
+
+	<table class="formtable">
+		<tr>
+			<td>UserName</td>
+			<td>Email</td>
+			<td>Authority</td>
+			<td>Enabled</td>
+		</tr>
+		<c:forEach var="user" items="${users}">  // here users will be passed via the Model model from the controller.
+			<tr>
+				<td><c:out value="${user.username}"></c:out></td>
+				<td><c:out value="${user.email}"></c:out></td>
+				<td><c:out value="${user.authority}"></c:out></td>
+				<td><c:out value="${user.enabled}"></c:out></td>
+			</tr>
+
+		</c:forEach>
+	</table>
+Also we have used the same css file for the table, 
+
+<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
+
+It will work, no problemo.
+
+
+
+---------------------------------------------------------------------------
+
+
+
+Case sensitive UserName:
+-------------------------
+
+As of now the user name is not case sensitive and I can login using any case letters.
+Quirk of MySql is that if I query using lower or upper case it will work. To fix this in MySQL, we can do like:
+
+	select * from authorities where username ="Admin"
+
+	select * from authorities where binary username ="admin"  // Now this query is case sensitive.
+
+So we go to security-context.xml, sec tab and go to the jdbc-user-service under the authentication-provider and in there
+on the right hand side, in the authorities-by-username-query: paste the following:
+
+	select * from authorities where binary username = ?
+
+and for the user-by-username-query: 	select * from users where binary username = ?
+
+This works, no problemo kushal 
+
+
+-------------------------------------------------------------------------
+
+
+Method level access control:
+------------------------------
+
+
+We are trying to secure particular methods from even being run.
+
+Go to the sec tab in the same security-config.xml file and click on the root bean, right click and select global method security.
+In the right of that selection, set the secured-annotation to enabled.
+In the source, it will look like:
+	<security:global-method-security secured-annotations="enabled"></security:global-method-security>
+
+This will allow us to have annotations on the methods which will specify that which role we need to have to execute those methods.
+
+Catch:
+
+This has a catch, for it to work, the roles of the user has to be in the format as:
+	ROLE_ADMIN 
+	ROLE_CATCH
+
+	It has to be ROLE_ something. So we are going to change it in the MySQL database. 
+Now we also need to update it in the source of security-config.xml file as,
+	<security:intercept-url pattern="/admin" access="hasRole('ROLE_ADMIN')" />
+
+	Also in the home.jsp as:
+
+		<sec:authorize access="hasRole('ROLE_ADMIN')">
+		<p><a href="${pageContext.request.contextPath}/admin">Admin</a></p>
+		</sec:authorize>
+
+
+To protect something we generally go the service layer because without accessing the service layer nothing can be done. So we will 
+protect the getAllUsers method in the UserServices class.
+We put the annotations as: @Secured("ROLE_ADMIN")
+
+Now as of now we were having a url level security via the security-config.xml file. Say now we will permit all access to the /admin url as:
+
+	<security:intercept-url pattern="/admin" access="permitAll" />
+	<!-- <security:intercept-url pattern="/admin" access="hasRole('ROLE_ADMIN')" />  -->
+
+But now the method level security will not allow any user without the ROLE_ADMIN.
+
+It is better to have both url and method level security.
+
+
+TO finish off, we have made the following changes in the OffersService, as:
+		@Secured({"ROLE_USER", "ROLE_USER"})  // using {} for more than one roles
+		public void create(Offers offers) {
+			offersDao.create(offers);
+		}
+
+And in the login controller:
+
+		user.setAuthority("ROLE_USER");
+
+This also works smoothly. No problemo
+
+------------------------------------------------------------
+
+
+
+Catching Secure annotation violation:
+--------------------------------------
+We want to have a custom page for the users when they are denied to some page like the pages secured with secured annotation.
+
+So we made a denied.jsp to direct to. Now we need to have a controller in the login controller. Also need to update the security-config.xml file
+as <security:intercept-url pattern="/denied" access="permitAll" />
+
+Now in the sec tab of security-config.xml, right click the http bean and select access-denied-handler. To the right of that selection,
+in error page, put /denied.
+Now what happens is that if I am logged in and go to the /admin page, it will redirect the denied page, because in the method calls, we have
+used a @secured annotation.
+To solve this, first we will rename the databaseerrorhandler class to, to ErrorHandler and in there we have added:
+			@ExceptionHandler(AccessDeniedException.class)  //AccessDeniedException is the class that generates the exception when denied
+						// Make sure is from spring not java.lang or something
+			public String handleAccessException(AccessDeniedException ex) {
+				return "denied";
+			}
+
+
+Now it works.
+
+
+------------------------------------------------------------
+
+
+
+Adding Remember me functionality:
+----------------------------------
+
+Let's set the session time out in the web.xml file, such that the user will have to  relogin if it exceeds the defined session timeout time of inactivity.
+To do that, paste the following in the web.xml file.
+
+  <session-config><session-timeout>20</session-timeout></session-config> //here 20 is the time, 20mins
+
+Go to the sec tab in the security-config.xml and right click the http element and select remember-me element and on the right of that:
+
+key: offersAppKey  // can be anything
+User-service-ref: jdbcUserService   // can be anything but has to match as below
+
+Now go the jdbc-user-service and in there on the right, put jdbcUserService for id. This has to match
+
+
+		<security:authentication-provider>
+			<security:jdbc-user-service data-source-ref="dataSource"
+				authorities-by-username-query="select * from authorities where binary username = ?"
+				users-by-username-query="select * from users where binary username = ?"
+				id="jdbcUserService" />
+		</security:authentication-provider>
+
+
+
+		<security:remember-me key="offersAppKey"
+				user-service-ref="jdbcUserService" />
+		</security:http>
+
+
+	Now lets add a check box in the login.jsp page.
+
+
+				<tr>
+					<td>Remeber Me :</td>
+					<td><input type="checkbox" name='_spring_security_remember_me' checked="checked"/></td> // no j in the name
+				</tr>
+
+Now it should work, the remember me cookie will have the session identity stored for 2 weeks. Without that it is 20 mins as set in the web.xml file.
+
+It works, hurray !!
+
+
+---------------------------------------------------------------
+
+
+Encrypting Password:
+--------------------
+
+We will take the password from the user, encryt using certain algorithm and then store the encrypted version in the database.
+We need a bean to do this encoding of the password.
+
+In the security-context.xml, in the bean tab, create new bean and set the id as passwordEncoder and browse of StandardPasswordEncoder as Class.
+It looks like :
+
+	<bean id="passwordEncoder"
+		class="org.springframework.security.crypto.password.StandardPasswordEncoder">
+	</bean>
+
+	This uses the SHA-256 hashing with 1024 iteration and a random 8 byte salt value
+
+Go to the sec tab and right click the authentication provider and select the password encoder and set the ref on the right to passwordEncoder.
+
+
+
+Now in the UsersDAO, we add an instance of passwordEncoder as:
+
+	@Autowired
+	private PasswordEncoder passwordEncoder; // one with crypto
+	and use autowire which will autowire with the bean we created just now.
+
+Now we go to the UsersDAO and make some changes in the Create Method as:
+
+	
+		BeanPropertySqlParameterSource params = new BeanPropertySqlParameterSource(user); to 
+
+		MapSqlParameterSource params = new MapSqlParameterSource(); // this is more elegant way.
+		params.addValue("username", user.getUsername());
+		params.addValue("password", passwordEncoder.encode(user.getPassword()));
+		params.addValue("email", user.getEmail());
+		params.addValue("enabled", user.isEnabled());
+		params.addValue("authority", user.getAuthority());
+
+
+If I run now it will give error because we have not set the authority in the above code.
+Add a bean called transactionManager and browse for DataSourceTranscationManger in the class at DAO-context.xml. Right click that bean and select insert property
+element and set the id as dataSource and ref as dataSource.
+Now go to the namespace and select tx in the checkbox. Go to the tx tab and right click the bean and select annotation driven.
+The source code will look like:
+
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<tx:annotation-driven />
+
+It should work now. No big problemo
+
+-----------------------------------------------------------
+
+
+Making the password hidden:
+
+				<tr>
+					<td>Password:</td>
+					<td><sf:input id="password" path="password" name="password"
+							type="password" /></td>             //Changed the type = "text" to "password"
+					<sf:errors path="password" cssClass="error"></sf:errors>
+				</tr>
+				<tr>
+					<td>Confirm Password:</td>
+					<td><input id="confirmpass" name="confirmpass" type="password" /></td>
+					<div id="matchpass"></div>
+				</tr>
+
+
+
+It WORKS, the password is hidden now !!!
+
+--------------------------------------------------------

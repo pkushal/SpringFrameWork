@@ -23,7 +23,7 @@
 <p><a href="<c:url value='/j_spring_security_logout'></c:url>">LogOut</a></p>
 </sec:authorize>
 
-<sec:authorize access="hasRole('admin')">
+<sec:authorize access="hasRole('ROLE_ADMIN')">
 <p><a href="${pageContext.request.contextPath}/admin">Admin</a></p>
 </sec:authorize>
 

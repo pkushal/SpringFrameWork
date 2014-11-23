@@ -1,5 +1,7 @@
 package com.kushal.springframework.web.controllers;
 
+import java.util.List;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,10 @@ public class LoginController {
 	public String showLogin() {
 		return "login";
 	}
+	@RequestMapping("/denied")
+	public String showDenied() {
+		return "denied";
+	}
 	
 	@RequestMapping("/loggedout")
 	public String showLogout() {
@@ -44,7 +50,7 @@ public class LoginController {
 			return "newaccount";
 		}
 		user.setEnabled(true);
-		user.setAuthority("user");
+		user.setAuthority("ROLE_USER");
 		
 		if(usersService.exists(user.getUsername())){
 			System.out.println("Duplicate username found...");
@@ -59,5 +65,12 @@ public class LoginController {
 			return "newaccount";
 		}
 		return "accountcreated";
+	}
+	
+	@RequestMapping("/admin")
+	public String showAdmin(Model model){
+		List<User> users =usersService.getAllUsers();
+		model.addAttribute ("users", users);
+		return "admin";
 	}
 }

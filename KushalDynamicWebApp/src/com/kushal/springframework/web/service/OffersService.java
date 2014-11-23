@@ -3,6 +3,7 @@ package com.kushal.springframework.web.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Service;
 
 import com.kushal.springframework.web.DAO.Offers;
@@ -21,7 +22,7 @@ public class OffersService {
 	public List<Offers> getCurrent() {
 		return offersDao.getOffers();
 	}
-
+	@Secured({"ROLE_USER", "ROLE_USER"})
 	public void create(Offers offers) {
 		offersDao.create(offers);
 	}

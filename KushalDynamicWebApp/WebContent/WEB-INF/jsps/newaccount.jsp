@@ -77,12 +77,12 @@
 				<tr>
 					<td>Password:</td>
 					<td><sf:input id="password" path="password" name="password"
-							type="text" /></td>
+							type="password" /></td>
 					<sf:errors path="password" cssClass="error"></sf:errors>
 				</tr>
 				<tr>
 					<td>Confirm Password:</td>
-					<td><input id="confirmpass" name="confirmpass" type="text" /></td>
+					<td><input id="confirmpass" name="confirmpass" type="password" /></td>
 					<div id="matchpass"></div>
 				</tr>
 
